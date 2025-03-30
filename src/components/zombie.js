@@ -12,15 +12,15 @@ export class Zombie {
             // Forest zombies - slower but tougher
             this.speed = 1.2 + Math.random() * 0.5;
             this.health = 3;
-            this.attackRange = 1.5;
+            this.attackRange = 2;
         } else {
             // Desert zombies - faster but weaker
             this.speed = 2 + Math.random() * 0.8;
             this.health = 2;
-            this.attackRange = 1.8;
+            this.attackRange = 3;
         }
         
-        this.attackCooldown = 1;
+        this.attackCooldown = 5;
         this.lastAttackTime = 0;
     }
     
@@ -209,11 +209,27 @@ export class Zombie {
         const currentTime = Date.now();
         const distanceToPlayer = this.model.position.distanceTo(playerPosition);
         
+        console.log("Distance to player:", distanceToPlayer);
+        console.log("Attack range:", this.attackRange);
+        console.log("Current time:", currentTime);
+        console.log("Last attack time:", this.lastAttackTime);
+        console.log("Attack cooldown:", this.attackCooldown);
+
+        if (distanceToPlayer <= this.attackRange) {
+            console.log("Zombie is close enough to attack!");
+            return true;
+        }
+    
+        console.log(distanceToPlayer <= this.attackRange ? "1Zombie is close enough to attack!" : "1Zombie is too far to attack.");
+        console.log(currentTime - this.lastAttackTime > this.attackCooldown * 1000 ? "2Zombie can attack!" : "2Zombie is on cooldown.");
         if (distanceToPlayer <= this.attackRange && currentTime - this.lastAttackTime > this.attackCooldown * 1000) {
+
             this.lastAttackTime = currentTime;
+            console.log("Zombie attacks!");
             return true;
         }
         
+        console.log("Zombie cannot attack yet.");
         return false;
     }
     

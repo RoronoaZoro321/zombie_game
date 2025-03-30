@@ -125,7 +125,7 @@ export class Game {
 
     spawnZombies() {
         // Determine zombie count and spawn distance
-        let zombieCount = 5;
+        let zombieCount = 1;
         let spawnDistance = 80;
 
         for (let i = 0; i < zombieCount; i++) {
@@ -176,7 +176,7 @@ export class Game {
                 this.ui.updateScore(this.score);
                 
                 // Respawn zombie if there are less than the map's zombie count
-                let maxZombies = 5;
+                let maxZombies = 1;
                 
                 if (this.zombies.length < maxZombies) {
                     setTimeout(() => {
@@ -199,16 +199,16 @@ export class Game {
                 }
             }
             
-            // Check if zombie has attacked player
+            // Check if the zombie can attack the player
             if (zombie.canAttack(this.player.getPosition())) {
-                const damageAmount = 10;
-                
+                const damageAmount = 10; // Damage inflicted by the zombie
                 this.player.takeDamage(damageAmount);
                 this.ui.updateHealth(this.player.health);
+                console.log(`Player health: ${this.player.health}`);
                 
+                // Check if the player is dead
                 if (this.player.health <= 0 && !this.gameOver) {
                     this.gameOver = true;
-                    // Dispatch game over event instead of alert
                     const gameOverEvent = new CustomEvent('game-over', {
                         detail: { score: this.score }
                     });
