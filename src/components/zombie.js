@@ -208,29 +208,29 @@ export class Zombie {
     canAttack(playerPosition) {
         const currentTime = Date.now();
         const distanceToPlayer = this.model.position.distanceTo(playerPosition);
-        
+    
         console.log("Distance to player:", distanceToPlayer);
         console.log("Attack range:", this.attackRange);
         console.log("Current time:", currentTime);
         console.log("Last attack time:", this.lastAttackTime);
         console.log("Attack cooldown:", this.attackCooldown);
-
-        if (distanceToPlayer <= this.attackRange) {
-            console.log("Zombie is close enough to attack!");
-            return true;
+    
+        // Check if the zombie is within attack range
+        if (distanceToPlayer > this.attackRange) {
+            console.log("Zombie is too far to attack.");
+            return false;
         }
     
-        console.log(distanceToPlayer <= this.attackRange ? "1Zombie is close enough to attack!" : "1Zombie is too far to attack.");
-        console.log(currentTime - this.lastAttackTime > this.attackCooldown * 1000 ? "2Zombie can attack!" : "2Zombie is on cooldown.");
-        if (distanceToPlayer <= this.attackRange && currentTime - this.lastAttackTime > this.attackCooldown * 1000) {
-
-            this.lastAttackTime = currentTime;
-            console.log("Zombie attacks!");
-            return true;
+        // Check if the cooldown has passed
+        if (currentTime - this.lastAttackTime <= this.attackCooldown * 200) {
+            console.log("Zombie is on cooldown.");
+            return false;
         }
-        
-        console.log("Zombie cannot attack yet.");
-        return false;
+    
+        // Zombie can attack
+        this.lastAttackTime = currentTime;
+        console.log("Zombie attacks!");
+        return true;
     }
     
     getPosition() {
