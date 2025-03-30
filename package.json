@@ -1,0 +1,19 @@
+{
+  "name": "zombie_game",
+  "version": "1.0.0",
+  "description": "A first-person zombie shooter using Three.js",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "vite",
+    "build": "vite build"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "three": "^0.152.2"
+  },
+  "devDependencies": {
+    "vite": "^4.3.9"
+  }
+}

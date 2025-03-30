@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zombie Shooter</title>
+    <style>
+        body { 
+            margin: 0; 
+            overflow: hidden; 
+            font-family: Arial, sans-serif;
+            background-color: #000;
+        }
+        canvas { 
+            display: block; 
+        }
+        #ui-container {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            font-family: Arial, sans-serif;
+            display: none; /* Hide game UI initially */
+        }
+        #crosshair {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 20px;
+            height: 20px;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            display: none; /* Hide crosshair initially */
+        }
+        #home-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.9)), url('./assets/zombie-background.jpg');
+            background-size: cover;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+        .title {
+            font-size: 4rem;
+            margin-bottom: 2rem;
+            color: #ff3333;
+            text-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+        }
+        .menu {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .menu-item {
+            padding: 12px 30px;
+            font-size: 1.5rem;
+            background-color: rgba(100, 20, 20, 0.7);
+            border: 2px solid #ff3333;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-radius: 5px;
+            min-width: 200px;
+            text-align: center;
+        }
+        .menu-item:hover {
+            background-color: #ff3333;
+            transform: scale(1.05);
+        }
+        #instructions, #credits {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            color: white;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 110;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .content-box {
+            background-color: rgba(40, 40, 40, 0.8);
+            border: 2px solid #ff3333;
+            padding: 30px;
+            border-radius: 10px;
+            max-width: 800px;
+            text-align: center;
+        }
+        .close-btn {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #ff3333;
+            border: none;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        #loading-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: black;
+            color: white;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 120;
+        }
+        .progress-bar {
+            width: 300px;
+            height: 20px;
+            background-color: #333;
+            margin-top: 20px;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .progress {
+            height: 100%;
+            background-color: #ff3333;
+            width: 0%;
+            transition: width 0.5s;
+        }
+
+        /* Pause Menu Styles */
+        #pause-menu {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 150;
+        }
+        
+        .pause-title {
+            font-size: 3rem;
+            margin-bottom: 2rem;
+            color: #ff3333;
+            text-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <!-- Home Screen -->
+    <div id="home-screen">
+        <h1 class="title">ZOMBIE SHOOTER</h1>
+        <div class="menu">
+            <button class="menu-item" id="start-game">Start Game</button>
+            <button class="menu-item" id="show-instructions">Instructions</button>
+            <button class="menu-item" id="show-credits">Credits</button>
+        </div>
+    </div>
+
+    <!-- Instructions Panel -->
+    <div id="instructions">
+        <div class="content-box">
+            <h2>HOW TO PLAY</h2>
+            <p>WASD - Move</p>
+            <p>MOUSE - Aim</p>
+            <p>LEFT CLICK - Shoot</p>
+            <p>R - Reload</p>  
+            <p>F - Flashlight</p>
+            <p>x</p>
+            <p>Survive as long as possible and eliminate zombies to earn points!</p>
+            <button class="close-btn" id="close-instructions">Back to Menu</button>
+        </div>
+    </div>
+
+    <!-- Credits Panel -->
+    <div id="credits">
+        <div class="content-box">
+            <h2>CREDITS</h2>
+            <p>Created with Three.js</p>
+            <p>Developed as a project for Computer Graphics</p>
+            <p>All assets and code created for educational purposes</p>
+            <button class="close-btn" id="close-credits">Back to Menu</button>
+        </div>
+    </div>
+
+    <!-- Loading Screen -->
+    <div id="loading-screen">
+        <h2>LOADING GAME...</h2>
+        <div class="progress-bar">
+            <div class="progress" id="loading-progress"></div>
+        </div>
+    </div>
+
+    <!-- Game UI -->
+    <div id="ui-container">
+        <div id="score">Score: 0</div>
+        <div id="health">Health: 100</div>
+        <div id="ammo">Ammo: 30</div>
+    </div>
+    <div id="crosshair">+</div>
+    
+    <!-- Pause Menu -->
+    <div id="pause-menu">
+        <h2 class="pause-title">PAUSED</h2>
+        <div class="menu">
+            <button class="menu-item" id="resume-game">Resume</button>
+            <button class="menu-item" id="show-pause-instructions">Instructions</button>
+            <button class="menu-item" id="exit-to-menu">Exit to Menu</button>
+        </div>
+    </div>
+    
+    <script type="module" src="./src/main.js"></script>
+</body>
+</html>
