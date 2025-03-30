@@ -7,6 +7,7 @@ document.getElementById('show-instructions').addEventListener('click', showInstr
 document.getElementById('show-credits').addEventListener('click', showCredits);
 document.getElementById('close-instructions').addEventListener('click', closeInstructions);
 document.getElementById('close-credits').addEventListener('click', closeCredits);
+document.getElementById('return-to-menu').addEventListener('click', returnToMenuFromGameOver);
 
 // Game instance
 let game = null;
@@ -72,10 +73,17 @@ function handleGameOver(event) {
     // Get score from event or game
     const score = event.detail?.score || (game ? game.score : 0);
     
+    // Don't immediately clean up the game - wait for user to click "Return to Menu"
+}
+
+function returnToMenuFromGameOver() {
+    // Hide game over screen
+    document.getElementById('game-over').style.display = 'none';
+    
     // Clean up existing game
     resetGame();
     
-    // Just navigate back to the menu without showing game over screen
+    // Show home screen
     document.getElementById('home-screen').style.display = 'flex';
 }
 
@@ -83,6 +91,7 @@ function resetGame() {
     // Hide game UI
     document.getElementById('ui-container').style.display = 'none';
     document.getElementById('crosshair').style.display = 'none';
+    document.getElementById('game-over').style.display = 'none';
     
     // Clean up existing game
     if (game) {

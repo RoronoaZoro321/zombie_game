@@ -4,6 +4,8 @@ export class UI {
         this.healthElement = document.getElementById('health');
         this.ammoElement = document.getElementById('ammo');
         this.pauseMenu = document.getElementById('pause-menu');
+        this.gameOverScreen = document.getElementById('game-over');
+        this.finalScoreElement = document.getElementById('final-score');
     }
     
     updateScore(score) {
@@ -24,5 +26,17 @@ export class UI {
     
     isPauseMenuVisible() {
         return this.pauseMenu.style.display === 'flex';
+    }
+    
+    showGameOver(score) {
+        // Hide game UI elements
+        document.getElementById('ui-container').style.display = 'none';
+        document.getElementById('crosshair').style.display = 'none';
+        
+        // Set final score
+        this.finalScoreElement.textContent = `Your Score: ${score}`;
+        
+        // Show game over screen
+        this.gameOverScreen.style.display = 'flex';
     }
 }

@@ -209,6 +209,14 @@ export class Game {
                 // Check if the player is dead
                 if (this.player.health <= 0 && !this.gameOver) {
                     this.gameOver = true;
+                    
+                    // Show game over screen
+                    this.ui.showGameOver(this.score);
+                    
+                    // Unlock pointer controls
+                    this.player.controls.unlock();
+                    
+                    // Fire game over event for any external listeners
                     const gameOverEvent = new CustomEvent('game-over', {
                         detail: { score: this.score }
                     });
