@@ -7,7 +7,8 @@ export class Player {
         this.camera = camera;
         this.scene = scene;
         this.controls = null;
-        this.moveSpeed = 8;
+        this.moveSpeed = 4;
+        this.runSpeedMultiplier = 1.7; // Multiplier for running speed
         this.health = 100;
         this.ammo = 30;
         this.canShoot = true;
@@ -21,6 +22,7 @@ export class Player {
         this.moveBackward = false;
         this.moveLeft = false;
         this.moveRight = false;
+        this.isRunning = false; // Track if the player is running
         
         // Gun model
         this.gun = null;
@@ -36,6 +38,25 @@ export class Player {
         this.gravity = 30;
         this.verticalVelocity = 0;
         this.groundLevel = 1.7; // Default height of camera from ground
+
+        // Aiming properties
+        this.isAiming = false;
+        this.aimTransitionSpeed = 8; // Speed of aim transition
+        this.defaultGunPosition = new THREE.Vector3(0.3, -0.3, -0.5); // Centered gun position
+        this.aimGunPosition = new THREE.Vector3(0, -0.2, -0.4); // Slightly raised when aiming
+        this.defaultFOV = 75;
+        this.aimFOV = 65; // Slightly zoomed in FOV when aiming
+
+        // Camera shake properties
+        this.bobbing = {
+            time: 0,
+            cycle: 0.5, // Time in seconds for a complete bob cycle
+            intensity: 0.01, // Normal walking intensity
+            runIntensity: 0.015, // Running intensity (stronger)
+            gunIntensity: 0.001, // Gun bobbing intensity
+            gunRunIntensity: 0.005, // Gun running intensity
+            aimIntensity: 0.005 // Reduced intensity when aiming
+        };
     }
     
     init() {
@@ -77,6 +98,24 @@ export class Player {
                 this.jump();
             }
         });
+
+        // Add mouse right click for aiming
+        document.addEventListener('mousedown', (event) => {
+            if (event.button === 2 && this.controls.isLocked) { // Right mouse button
+                this.startAiming();
+            }
+        });
+        
+        document.addEventListener('mouseup', (event) => {
+            if (event.button === 2 && this.controls.isLocked) { // Right mouse button
+                this.stopAiming();
+            }
+        });
+        
+        // Prevent context menu from appearing on right-click
+        document.addEventListener('contextmenu', (event) => {
+            event.preventDefault();
+        });
         
         // Create a simple gun model
         this.createGunModel();
@@ -92,14 +131,15 @@ export class Player {
         const gunMaterial = new THREE.MeshPhongMaterial({ color: 0x333333 });
         this.gun = new THREE.Mesh(gunGeometry, gunMaterial);
         
-        // Position the gun in front of the camera
-        this.gun.position.set(0.3, -0.2, -0.5);
+        // Position the gun in the middle of the screen
+        this.gun.position.copy(this.defaultGunPosition);
         this.camera.add(this.gun);
         this.scene.add(this.camera);
     }
     
     createFlashlight() {
         // Create spotlight for flashlight
+        // don't display the flashlight
         this.flashlight = new THREE.SpotLight(0xffffff, 1.5, 30, Math.PI / 6, 0.5, 1);
         this.flashlight.position.set(0, 0, 0);
         this.flashlight.target.position.set(0, 0, -1);
@@ -116,14 +156,6 @@ export class Player {
         this.flashlight.shadow.mapSize.height = 1024;
         this.flashlight.shadow.camera.near = 0.5;
         this.flashlight.shadow.camera.far = 30;
-        
-        // Add visual cue for flashlight on gun
-        const flashlightGeometry = new THREE.CylinderGeometry(0.03, 0.03, 0.1, 8);
-        const flashlightMaterial = new THREE.MeshPhongMaterial({ color: 0x111111 });
-        const flashlightMesh = new THREE.Mesh(flashlightGeometry, flashlightMaterial);
-        flashlightMesh.rotation.x = Math.PI / 2;
-        flashlightMesh.position.set(0.3, -0.15, -0.3);
-        this.camera.add(flashlightMesh);
     }
     
     toggleFlashlight() {
@@ -147,6 +179,10 @@ export class Player {
             case 'KeyD':
                 this.moveRight = true;
                 break;
+            case 'ShiftLeft':
+            case 'ShiftRight':
+                this.isRunning = true;
+                break;
         }
     }
     
@@ -164,6 +200,10 @@ export class Player {
             case 'KeyD':
                 this.moveRight = false;
                 break;
+            case 'ShiftLeft':
+            case 'ShiftRight':
+                this.isRunning = false;
+                break;
         }
     }
     
@@ -172,6 +212,18 @@ export class Player {
         if (event.button === 0 && this.controls.isLocked) { // Left mouse button
             this.shoot();
         }
+    }
+    
+    startAiming() {
+        this.isAiming = true;
+        // Reduce movement speed when aiming
+        this.moveSpeed = 2;
+    }
+    
+    stopAiming() {
+        this.isAiming = false;
+        // Restore normal movement speed
+        this.moveSpeed = 4;
     }
     
     shoot() {
@@ -230,7 +282,7 @@ export class Player {
     muzzleFlash() {
         // Create a quick flash at the end of the gun
         const flash = new THREE.PointLight(0xffff00, 2, 3);
-        flash.position.set(0.3, -0.2, -1);
+        flash.position.set(0, -0.3, -1); // Update flash position to match centered gun
         this.camera.add(flash);
         
         setTimeout(() => {
@@ -261,12 +313,18 @@ export class Player {
             this.direction.x = Number(this.moveRight) - Number(this.moveLeft);
             this.direction.normalize();
             
+            // Cannot run while aiming
+            const isActuallyRunning = this.isRunning && !this.isAiming;
+            
+            // Apply running speed multiplier if shift is pressed and not aiming
+            const currentSpeed = isActuallyRunning ? this.moveSpeed * this.runSpeedMultiplier : this.moveSpeed;
+            
             if (this.moveForward || this.moveBackward) {
-                this.velocity.z = this.direction.z * this.moveSpeed * delta;
+                this.velocity.z = this.direction.z * currentSpeed * delta;
             }
             
             if (this.moveLeft || this.moveRight) {
-                this.velocity.x = this.direction.x * this.moveSpeed * delta;
+                this.velocity.x = this.direction.x * currentSpeed * delta;
             }
             
             // Apply vertical movement for jumping
@@ -280,8 +338,105 @@ export class Player {
                 this.isJumping = false;
             }
             
+            // Handle aiming state transitions
+            this.updateAimingState(delta);
+            
+            // Apply camera bobbing effect when moving and not jumping
+            if ((this.moveForward || this.moveBackward || this.moveLeft || this.moveRight) && !this.isJumping) {
+                this.applyBobbing(delta);
+            } else {
+                // Gradually reset bobbing when not moving
+                this.resetBobbing(delta);
+            }
+            
             this.controls.moveRight(this.velocity.x);
             this.controls.moveForward(this.velocity.z);
+        }
+    }
+    
+    updateAimingState(delta) {
+        if (this.gun) {
+            // Smoothly transition gun position and FOV when aiming
+            if (this.isAiming) {
+                // Interpolate to aim position
+                this.gun.position.x += (this.aimGunPosition.x - this.gun.position.x) * this.aimTransitionSpeed * delta;
+                this.gun.position.y += (this.aimGunPosition.y - this.gun.position.y) * this.aimTransitionSpeed * delta;
+                this.gun.position.z += (this.aimGunPosition.z - this.gun.position.z) * this.aimTransitionSpeed * delta;
+                
+                // Transition FOV
+                this.camera.fov += (this.aimFOV - this.camera.fov) * this.aimTransitionSpeed * delta;
+            } else {
+                // Interpolate back to default position
+                this.gun.position.x += (this.defaultGunPosition.x - this.gun.position.x) * this.aimTransitionSpeed * delta;
+                this.gun.position.y += (this.defaultGunPosition.y - this.gun.position.y) * this.aimTransitionSpeed * delta;
+                this.gun.position.z += (this.defaultGunPosition.z - this.gun.position.z) * this.aimTransitionSpeed * delta;
+                
+                // Transition FOV back
+                this.camera.fov += (this.defaultFOV - this.camera.fov) * this.aimTransitionSpeed * delta;
+            }
+            
+            // Update projection matrix for FOV changes
+            this.camera.updateProjectionMatrix();
+        }
+    }
+    
+    applyBobbing(delta) {
+        // Update bobbing time based on movement speed
+        const speedFactor = this.isRunning && !this.isAiming ? 2.0 : 1.0;
+        this.bobbing.time += delta * speedFactor;
+        
+        // Calculate vertical bobbing (sin wave)
+        const verticalBob = Math.sin(this.bobbing.time * Math.PI * 2 / this.bobbing.cycle);
+        
+        // Calculate horizontal bobbing (shifted sin wave)
+        const horizontalBob = Math.sin(this.bobbing.time * Math.PI * 2 / this.bobbing.cycle + Math.PI / 2);
+        
+        // Determine bobbing intensity
+        let bobIntensity, gunBobIntensity;
+        
+        if (this.isAiming) {
+            // Reduced bobbing when aiming
+            bobIntensity = this.bobbing.aimIntensity;
+            gunBobIntensity = this.bobbing.aimIntensity;
+        } else if (this.isRunning) {
+            // Running intensities
+            bobIntensity = this.bobbing.runIntensity;
+            gunBobIntensity = this.bobbing.gunRunIntensity;
+        } else {
+            // Walking intensities
+            bobIntensity = this.bobbing.intensity;
+            gunBobIntensity = this.bobbing.gunIntensity;
+        }
+        
+        // Apply vertical bobbing to camera
+        this.camera.position.y += verticalBob * bobIntensity;
+        
+        // Apply gun bobbing (more dramatic than camera)
+        if (this.gun) {
+            // Apply less intense bobbing when aiming
+            if (this.isAiming) {
+                // Only apply minimal bobbing effect when aiming
+                this.gun.position.y += verticalBob * gunBobIntensity;
+                this.gun.position.x += horizontalBob * gunBobIntensity * 0.3;
+            } else {
+                // Normal bobbing when not aiming
+                this.gun.position.y += verticalBob * gunBobIntensity * 2;
+                this.gun.position.x += horizontalBob * gunBobIntensity;
+                this.gun.rotation.z = horizontalBob * gunBobIntensity * 0.5;
+            }
+        }
+    }
+    
+    resetBobbing(delta) {
+        // Gradually reset bobbing time
+        this.bobbing.time = 0;
+        
+        // Reset gun position smoothly if it exists
+        if (this.gun) {
+            // Interpolate back to default position (now centered)
+            this.gun.position.y += (this.defaultGunPosition.y - this.gun.position.y) * delta * 5;
+            this.gun.position.x += (this.defaultGunPosition.x - this.gun.position.x) * delta * 5;
+            this.gun.rotation.z += (0 - this.gun.rotation.z) * delta * 5;
         }
     }
     
