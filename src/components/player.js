@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls.js';
 import { Bullet } from './bullet.js';
 import audioManager from '../audio/audioManager.js';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 export class Player {
     constructor(camera, scene) {
@@ -25,8 +26,12 @@ export class Player {
         this.moveRight = false;
         this.isRunning = false; // Track if the player is running
         
-        // Gun model
+        // Gun model and animation properties
         this.gun = null;
+        this.gunModel = null;
+        this.gunAnimations = {};
+        this.animationMixer = null;
+        this.currentAnimation = null;
         
         // Flashlight
         this.hasFlashlight = false;
@@ -135,14 +140,107 @@ export class Player {
     }
     
     createGunModel() {
-        const gunGeometry = new THREE.BoxGeometry(0.1, 0.1, 0.5);
-        const gunMaterial = new THREE.MeshPhongMaterial({ color: 0x333333 });
-        this.gun = new THREE.Mesh(gunGeometry, gunMaterial);
+        // Create a variable to store the gun model
+        this.gun = new THREE.Object3D();
         
-        // Position the gun in the middle of the screen
+        // Position the gun holder in front of the camera
         this.gun.position.copy(this.defaultGunPosition);
         this.camera.add(this.gun);
         this.scene.add(this.camera);
+        
+        // Load the gun model
+        const loader = new GLTFLoader();
+        loader.load(
+            // The path to your gun model
+            '../../assets/models/gun/scene.gltf', // Adjust the path to your model file
+            (gltf) => {
+                // Gun model loaded successfully
+                this.gunModel = gltf.scene;
+                
+                // Apply appropriate scaling to the model
+                this.gunModel.scale.set(0.1, 0.1, 0.1); // Adjust scale as needed
+
+                // Apply rotation if needed to match proper orientation
+                this.gunModel.rotation.y = Math.PI; // Rotate 180 degrees if needed
+                
+                // Log the model structure to help debug
+                console.log('Model structure:', this.gunModel);
+                
+                // Add the loaded model to the gun object
+                this.gun.add(this.gunModel);
+                
+                // Enable shadows and ensure visibility for all meshes including hands
+                this.gunModel.traverse((node) => {
+                    if (node.isMesh) {
+                        console.log('Found mesh:', node.name);
+                        node.castShadow = true;
+                        node.receiveShadow = true;
+                        node.visible = true; // Ensure all meshes are visible
+                        
+                        // Check if this is a hand material and ensure it's visible
+                        if (node.name.toLowerCase().includes('Object') || 
+                            (node.material && node.material.name && 
+                             node.material.name.toLowerCase().includes('Object'))) {
+                            console.log('Found hand mesh:', node.name);
+                            // Make sure hand materials are visible
+                            if (Array.isArray(node.material)) {
+                                node.material.forEach(mat => {
+                                    mat.transparent = false;
+                                    mat.opacity = 1.0;
+                                });
+                            } else if (node.material) {
+                                node.material.transparent = false;
+                                node.material.opacity = 1.0;
+                            }
+                        }
+                    }
+                });
+                
+                // Set up animations if they exist
+                if (gltf.animations && gltf.animations.length > 0) {
+                    // Create animation mixer
+                    this.animationMixer = new THREE.AnimationMixer(this.gunModel);
+                    
+                    // Store each animation with a name
+                    gltf.animations.forEach((clip) => {
+                        console.log('Animation clip:', clip.name);
+                        // Create the animation action
+                        const action = this.animationMixer.clipAction(clip);
+                        
+                        // Store the animation by name
+                        this.gunAnimations[clip.name] = action;
+                        
+                        // Configure the shooting animation for non-looping
+                        if (clip.name === 'Rig|MK_Shot' || clip.name === 'Hands|Shot') {
+                            action.setLoop(THREE.LoopOnce);
+                            action.clampWhenFinished = true;
+                        }
+                        
+                        // Configure the reload animation
+                        if (clip.name === 'Rig|MK_ReloadFull' || clip.name === 'Hands|Reloat_f') {
+                            action.setLoop(THREE.LoopOnce);
+                            action.clampWhenFinished = true;
+                        }
+                        
+                        console.log(`Loaded animation: ${clip.name}`);
+                    });
+                }
+            },
+            // onProgress callback
+            (xhr) => {
+                console.log(`${(xhr.loaded / xhr.total) * 100}% loaded`);
+            },
+            // onError callback
+            (error) => {
+                console.error('Error loading gun model:', error);
+                
+                // Fallback to a simple box if model fails to load
+                const gunGeometry = new THREE.BoxGeometry(0.1, 0.1, 0.5);
+                const gunMaterial = new THREE.MeshPhongMaterial({ color: 0x333333 });
+                const gunMesh = new THREE.Mesh(gunGeometry, gunMaterial);
+                this.gun.add(gunMesh);
+            }
+        );
     }
     
     createFlashlight() {
@@ -254,6 +352,9 @@ export class Player {
             // Play gunshot sound
             audioManager.play('gunshot', { volume: 0.7 });
             
+            // Play shooting animation if available
+            this.playShootAnimation();
+            
             // Add muzzle flash effect
             this.muzzleFlash();
             
@@ -273,23 +374,74 @@ export class Player {
         }
     }
     
+    playShootAnimation() {
+        // Check if we have animations available
+        if (!this.animationMixer || !this.gunAnimations) return;
+        
+        // Use the exact animation name for shooting
+        let shootAnimation = this.gunAnimations['Rig|MK_Shot'];
+        // If the shoot animation is not found, try the alternative name
+        if (!shootAnimation) {
+            shootAnimation = this.gunAnimations['Hands|Shot'];
+        }
+        
+        // Play the animation if found
+        if (shootAnimation) {
+            // Reset and play the animation
+            shootAnimation.reset();
+            shootAnimation.play();
+            
+            // Store as current animation
+            this.currentAnimation = shootAnimation;
+        }
+    }
+    
     reload() {
         if (this.ammo < 30 && this.controls.isLocked) {
             this.canShoot = false;
             
-            // Simple reload animation
-            const originalPos = this.gun.position.y;
-            this.gun.position.y -= 0.1;
-            
             // Play reload sound
             audioManager.play('reload', { volume: 0.6 });
             
+            // Play reload animation if available
+            this.playReloadAnimation();
+            
             setTimeout(() => {
-                this.gun.position.y = originalPos;
                 this.ammo = 30;
                 this.canShoot = true;
                 document.getElementById('ammo').textContent = `Ammo: ${this.ammo}`;
             }, this.reloadTime * 1000);
+        }
+    }
+    
+    playReloadAnimation() {
+        // Check if we have animations available
+        if (!this.animationMixer || !this.gunAnimations) return;
+        
+        // Use the exact animation name for reloading
+        let reloadAnimation = this.gunAnimations['Rig|MK_ReloadFull'];
+        // If the reload animation is not found, try the alternative name
+        if (!reloadAnimation) {
+            reloadAnimation = this.gunAnimations['Hands|Reloat_f'];
+        }
+        
+        // Play the animation if found
+        if (reloadAnimation) {
+            // Reset and play the animation
+            reloadAnimation.reset();
+            reloadAnimation.setEffectiveTimeScale(0.7); // Ensure slow speed
+            reloadAnimation.play();
+            
+            // Store as current animation
+            this.currentAnimation = reloadAnimation;
+        } else {
+            // Fallback to simple reload animation if the model animation isn't available
+            const originalPos = this.gun.position.y;
+            this.gun.position.y -= 0.1;
+            
+            setTimeout(() => {
+                this.gun.position.y = originalPos;
+            }, this.reloadTime * 1000 * 0.8); // Move back up a bit before the reload completes
         }
     }
     
@@ -319,6 +471,11 @@ export class Player {
         const pauseMenu = document.getElementById('pause-menu');
         if (pauseMenu.style.display === 'flex') {
             return; // Skip updates when paused
+        }
+        
+        // Update animation mixer if it exists
+        if (this.animationMixer) {
+            this.animationMixer.update(delta);
         }
         
         if (this.controls.isLocked) {
