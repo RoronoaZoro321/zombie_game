@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import audioManager from '../audio/audioManager.js';
-import { loop } from 'three/tsl';
+// import { loop } from 'three/tsl';
 
 export class Level {
     constructor(scene) {

@@ -390,10 +390,11 @@ export class Player {
                 console.log('Press E to open the box');
                 document.addEventListener('keydown', (event) => {
                     if (event.key === 'e') {
+                        console.log('Interacting with box');
                         box.interact(this); // Call the interact method on the box
-                        this.scene.remove(box.model); // Remove the box from the scene
+                        
                     }
-                });
+                }, { once: true }); // Use { once: true } to ensure the listener is removed after execution
             }
         });
     }
