@@ -5,6 +5,7 @@ import { Box } from '../components/box.js';
 // import { LevelFactory } from '../levels/levelFactory.js';
 import { Level } from '../levels/level.js';
 import { UI } from '../ui/ui.js';
+import audioManager from '../audio/audioManager.js';
 
 export class Game {
     constructor(mapId = 1) {
@@ -24,6 +25,9 @@ export class Game {
     }
 
     init() {
+        // Initialize audio manager
+        audioManager.init();
+        
         // Set up the scene
         this.scene = new THREE.Scene();
         
@@ -74,6 +78,11 @@ export class Game {
         document.getElementById('resume-game').addEventListener('click', () => this.togglePause(false));
         document.getElementById('show-pause-instructions').addEventListener('click', () => this.showInstructions());
         document.getElementById('exit-to-menu').addEventListener('click', () => this.exitToMenu());
+        
+        // Add volume control to the pause menu
+        document.getElementById('volume-slider').addEventListener('input', (e) => {
+            audioManager.setMasterVolume(e.target.value / 100);
+        });
     }
     
     showInstructions() {

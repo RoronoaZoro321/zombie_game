@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { Game } from './core/game.js';
+import audioManager from './audio/audioManager.js';
 
 // Initialize menu controls
 document.getElementById('start-game').addEventListener('click', startGame);
@@ -8,6 +9,14 @@ document.getElementById('show-credits').addEventListener('click', showCredits);
 document.getElementById('close-instructions').addEventListener('click', closeInstructions);
 document.getElementById('close-credits').addEventListener('click', closeCredits);
 document.getElementById('return-to-menu').addEventListener('click', returnToMenuFromGameOver);
+
+// Initialize audio on user interaction to comply with browser autoplay policies
+document.addEventListener('click', initAudio, { once: true });
+
+function initAudio() {
+    audioManager.init();
+    console.log('Audio initialized');
+}
 
 // Game instance
 let game = null;
@@ -30,6 +39,11 @@ function closeCredits() {
 }
 
 function startGame() {
+    // Ensure audio is initialized
+    if (!audioManager.initialized) {
+        audioManager.init();
+    }
+    
     // Show loading screen
     const homeScreen = document.getElementById('home-screen');
     const loadingScreen = document.getElementById('loading-screen');

@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+import audioManager from '../audio/audioManager.js';
+import { loop } from 'three/tsl';
 
 export class Level {
     constructor(scene) {
@@ -46,6 +48,22 @@ export class Level {
         
         // Add some trees, rocks, and fog for environment
         this.addForestObjects();
+        
+        // Start playing forest environment sounds
+        this.startEnvironmentSounds();
+    }
+
+    startEnvironmentSounds() {
+        // Play environment sounds
+        audioManager.play('environment', { volume: 0.4, loop: true });
+    }
+
+
+    
+    
+    cleanup() {   
+        // Stop all environment sounds
+        audioManager.stop('environment');
     }
     
     createBarriers() {
