@@ -167,6 +167,7 @@ export class Game {
             const box = new Box(this.scene, position);
             box.init();
             this.boxes.push(box);
+            this.player.boxes.push(box); // Give the player access to the box
         }
     }
 
@@ -225,7 +226,7 @@ export class Game {
             
             // Check if the zombie can attack the player
             if (zombie.canAttack(this.player.getPosition())) {
-                const damageAmount = 10; // Damage inflicted by the zombie
+                damageAmount = this.player.damage;
                 this.player.takeDamage(damageAmount);
                 this.ui.updateHealth(this.player.health);
                 console.log(`Player health: ${this.player.health}`);
@@ -275,7 +276,7 @@ export class Game {
             const distance = this.player.getPosition().distanceTo(box.position);
             console.log(distance);
             if (distance < 5) {
-                console.log('Press E to open the box');
+                // console.log('Press E to open the box');
             }
         });
     }

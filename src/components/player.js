@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls.js';
 import { Bullet } from './bullet.js';
+import { Box } from './box.js';
 
 export class Player {
     constructor(camera, scene) {
@@ -11,9 +12,11 @@ export class Player {
         this.runSpeedMultiplier = 1.7; // Multiplier for running speed
         this.health = 100;
         this.ammo = 30;
+        this.damage = 10;
         this.canShoot = true;
         this.reloadTime = 1.5;
         this.bullets = [];
+        this.boxes = [];
         
         this.velocity = new THREE.Vector3();
         this.direction = new THREE.Vector3();
@@ -352,6 +355,20 @@ export class Player {
             this.controls.moveRight(this.velocity.x);
             this.controls.moveForward(this.velocity.z);
         }
+
+        // Check player is near a box
+        this.boxes.forEach(box => {
+            const distance = this.getPosition().distanceTo(box.position);
+            if (distance < 5) { // Adjust distance as needed
+                console.log('Press E to open the box');
+                document.addEventListener('keydown', (event) => {
+                    if (event.key === 'e') {
+                        box.interact(this); // Call the interact method on the box
+                        this.scene.remove(box.model); // Remove the box from the scene
+                    }
+                });
+            }
+        });
     }
     
     updateAimingState(delta) {
@@ -449,15 +466,7 @@ export class Player {
         return this.camera.position;
     }
 
-    openBox(boxPosition){
-        const distanceToBox = this.camera.position.distanceTo(boxPosition);
-        if (distanceToBox < 3) {
-            // Logic to open the box and give player an ability
-            const randomAbility = this.ability[Math.floor(Math.random() * this.ability.length)];
-            console.log(`You opened the box and received: ${randomAbility}`);
-            // Implement ability logic here
-        }
-    }
+    
 
     playerPosition() {
         return this.camera.position;
