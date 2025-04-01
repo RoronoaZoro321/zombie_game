@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import audioManager from '../audio/audioManager.js';
 
 export class Zombie {
     constructor(scene, position, mapId = 1) {
@@ -22,6 +23,11 @@ export class Zombie {
         
         this.attackCooldown = 5;
         this.lastAttackTime = 0;
+
+        // Sound related properties
+        this.lastGrowlTime = 0;
+        this.growlInterval = 5000 + Math.random() * 8000; // Random interval between growls
+        this.playedDeathSound = false;
     }
     
     init() {
@@ -147,12 +153,35 @@ export class Zombie {
     }
     
     update(delta, playerPosition) {
-        if (this.health <= 0) return;
+        if (this.health <= 0) {
+            if (!this.playedDeathSound) {
+                audioManager.play('zombieDeath', { volume: 0.5 });
+                this.playedDeathSound = true;
+            }
+            return;
+        }
         
         // Direction to player
         const direction = new THREE.Vector3()
             .subVectors(playerPosition, this.model.position)
             .normalize();
+        
+        // Distance to player
+        const distanceToPlayer = this.model.position.distanceTo(playerPosition);
+        
+        // Play random growl sounds
+        const currentTime = Date.now();
+        if (currentTime - this.lastGrowlTime > this.growlInterval) {
+            // Only play growl sounds if somewhat close to the player (optimization)
+            if (distanceToPlayer < 20) {
+                // Calculate volume based on distance
+                const volume = Math.min(0.7, 1.0 - distanceToPlayer / 30);
+                audioManager.play('zombieGrowl', { volume: volume * 0.6 });
+            }
+            this.lastGrowlTime = currentTime;
+            // Set new random interval
+            this.growlInterval = 5000 + Math.random() * 8000;
+        }
         
         // Move zombie towards player
         this.model.position.x += direction.x * this.speed * delta;
@@ -221,6 +250,10 @@ export class Zombie {
     
         // Zombie can attack
         this.lastAttackTime = currentTime;
+        
+        // Play attack sound
+        audioManager.play('zombieAttack', { volume: 0.6 });
+        
         return true;
     }
     

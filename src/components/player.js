@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls.js';
 import { Bullet } from './bullet.js';
+import audioManager from '../audio/audioManager.js';
 
 export class Player {
     constructor(camera, scene) {
@@ -57,6 +58,13 @@ export class Player {
             gunRunIntensity: 0.005, // Gun running intensity
             aimIntensity: 0.005 // Reduced intensity when aiming
         };
+
+        // Sound related properties
+        this.footstepTimer = 0;
+        this.footstepInterval = 0.5; // Time between footsteps in seconds
+        this.runFootstepInterval = 0.3; // Faster footsteps when running
+        this.wasJumping = false; // To detect landing
+        this.activeFootstepSound = null;
     }
     
     init() {
@@ -243,8 +251,8 @@ export class Player {
             this.ammo--;
             document.getElementById('ammo').textContent = `Ammo: ${this.ammo}`;
             
-            // Add gunshot sound
-            // A sound could be added here
+            // Play gunshot sound
+            audioManager.play('gunshot', { volume: 0.7 });
             
             // Add muzzle flash effect
             this.muzzleFlash();
@@ -259,6 +267,9 @@ export class Player {
             if (this.ammo === 0) {
                 this.reload();
             }
+        } else if (this.ammo === 0 && this.controls.isLocked) {
+            // Play empty gun click sound
+            audioManager.play('empty', { volume: 0.5 });
         }
     }
     
@@ -269,6 +280,9 @@ export class Player {
             // Simple reload animation
             const originalPos = this.gun.position.y;
             this.gun.position.y -= 0.1;
+            
+            // Play reload sound
+            audioManager.play('reload', { volume: 0.6 });
             
             setTimeout(() => {
                 this.gun.position.y = originalPos;
@@ -294,6 +308,9 @@ export class Player {
         if (!this.isJumping && this.controls.isLocked) {
             this.isJumping = true;
             this.verticalVelocity = this.jumpHeight;
+            
+            // Play jump sound
+            audioManager.play('jump', { volume: 0.4 });
         }
     }
     
@@ -348,6 +365,16 @@ export class Player {
                 // Gradually reset bobbing when not moving
                 this.resetBobbing(delta);
             }
+            
+            // Handle movement sounds
+            this.updateMovementSounds(delta);
+            
+            // Check if we've landed
+            if (this.wasJumping && !this.isJumping) {
+                // Play landing sound
+                audioManager.play('land', { volume: 0.5 });
+            }
+            this.wasJumping = this.isJumping;
             
             this.controls.moveRight(this.velocity.x);
             this.controls.moveForward(this.velocity.z);
@@ -437,6 +464,34 @@ export class Player {
             this.gun.position.y += (this.defaultGunPosition.y - this.gun.position.y) * delta * 5;
             this.gun.position.x += (this.defaultGunPosition.x - this.gun.position.x) * delta * 5;
             this.gun.rotation.z += (0 - this.gun.rotation.z) * delta * 5;
+        }
+    }
+    
+    updateMovementSounds(delta) {
+        const isMoving = this.moveForward || this.moveBackward || this.moveLeft || this.moveRight;
+        
+        // Don't play footsteps while jumping
+        if (isMoving && !this.isJumping) {
+            this.footstepTimer += delta;
+            
+            // Determine the correct interval based on whether running or walking
+            const currentInterval = this.isRunning && !this.isAiming 
+                ? this.runFootstepInterval 
+                : this.footstepInterval;
+            
+            if (this.footstepTimer >= currentInterval) {
+                this.footstepTimer = 0;
+                
+                // Play the appropriate footstep sound
+                if (this.isRunning && !this.isAiming) {
+                    audioManager.play('footstepRun', { volume: 0.4 });
+                } else {
+                    audioManager.play('footstep', { volume: 0.3 });
+                }
+            }
+        } else {
+            // Reset timer when not moving
+            this.footstepTimer = 0;
         }
     }
     

@@ -22,7 +22,7 @@
             font-family: Arial, sans-serif;
             display: none; /* Hide game UI initially */
         }
-        #crosshair {
+        #cr osshair {
             position: absolute;
             top: 50%;
             left: 50%;
@@ -159,6 +159,27 @@
             text-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
         }
 
+        /* Volume slider styles */
+        .volume-control {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+            background-color: rgba(40, 40, 40, 0.8);
+            padding: 15px;
+            border-radius: 5px;
+            width: 250px;
+        }
+        
+        .volume-control label {
+            margin-bottom: 10px;
+        }
+        
+        .volume-control input {
+            width: 100%;
+            cursor: pointer;
+        }
+
         /* Game Over Screen Styles */
         #game-over {
             position: absolute;
@@ -250,6 +271,10 @@
             <button class="menu-item" id="resume-game">Resume</button>
             <button class="menu-item" id="show-pause-instructions">Instructions</button>
             <button class="menu-item" id="exit-to-menu">Exit to Menu</button>
+        </div>
+        <div class="volume-control">
+            <label for="volume-slider">Volume</label>
+            <input type="range" id="volume-slider" min="0" max="100" value="50">
         </div>
     </div>
     
