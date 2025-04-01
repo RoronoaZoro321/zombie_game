@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls.js';
 import { Bullet } from './bullet.js';
+import { Box } from './box.js';
 import audioManager from '../audio/audioManager.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
@@ -13,9 +14,11 @@ export class Player {
         this.runSpeedMultiplier = 1.7; // Multiplier for running speed
         this.health = 100;
         this.ammo = 30;
+        this.damage = 10;
         this.canShoot = true;
         this.reloadTime = 1.5;
         this.bullets = [];
+        this.boxes = [];
         
         this.velocity = new THREE.Vector3();
         this.direction = new THREE.Vector3();
@@ -536,6 +539,21 @@ export class Player {
             this.controls.moveRight(this.velocity.x);
             this.controls.moveForward(this.velocity.z);
         }
+
+        // Check player is near a box
+        this.boxes.forEach(box => {
+            const distance = this.getPosition().distanceTo(box.position);
+            if (distance < 5) { // Adjust distance as needed
+                console.log('Press E to open the box');
+                document.addEventListener('keydown', (event) => {
+                    if (event.key === 'e') {
+                        console.log('Interacting with box');
+                        box.interact(this); // Call the interact method on the box
+                        
+                    }
+                }, { once: true }); // Use { once: true } to ensure the listener is removed after execution
+            }
+        });
     }
     
     updateAimingState(delta) {
@@ -658,6 +676,12 @@ export class Player {
     }
     
     getPosition() {
+        return this.camera.position;
+    }
+
+    
+
+    playerPosition() {
         return this.camera.position;
     }
 }

@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import { Player } from '../components/player.js';
 import { Zombie } from '../components/zombie.js';
+import { Box } from '../components/box.js';
+// import { LevelFactory } from '../levels/levelFactory.js';
 import { Level } from '../levels/level.js';
 import { UI } from '../ui/ui.js';
 import audioManager from '../audio/audioManager.js';
@@ -12,6 +14,7 @@ export class Game {
         this.renderer = null;
         this.player = null;
         this.zombies = [];
+        this.boxes = [];
         this.level = null;
         this.ui = null;
         this.clock = new THREE.Clock();
@@ -19,6 +22,7 @@ export class Game {
         this.score = 0;
         this.mapId = mapId;
         this.isPaused = false;
+        this.boxSpawnInterval = null;
     }
 
     init() {
@@ -56,9 +60,10 @@ export class Game {
 
         // Set up the UI
         this.ui = new UI();
-
+        
         // Set up the zombies
         this.spawnZombies();
+        this.startBoxSpawn();
 
         // Handle window resize
         window.addEventListener('resize', () => this.handleResize());
@@ -133,7 +138,7 @@ export class Game {
 
     spawnZombies() {
         // Determine zombie count and spawn distance
-        let zombieCount = 1;
+        let zombieCount = 5;
         let spawnDistance = 80;
 
         for (let i = 0; i < zombieCount; i++) {
@@ -152,6 +157,37 @@ export class Game {
             zombie.init();
             this.zombies.push(zombie);
         }
+    }
+
+    startBoxSpawn() {
+        this.boxSpawnInterval = setInterval(() => {
+            console.log('Spawning box');
+                this.spawnBox();
+        }, this.getRandomSpawnTime());
+    }
+
+    spawnBox() {
+        const spawnDistance = 80;
+        const position = new THREE.Vector3(
+            (Math.random() - 0.5) * spawnDistance,
+            0,
+            (Math.random() - 0.5) * spawnDistance
+        );
+
+        // Make sure boxes don't spawn too close to the player
+        if (position.distanceTo(this.player.getPosition()) < 10) {
+            position.z += 15;
+        }
+
+        const box = new Box(this.scene, position);
+        box.init();
+        this.boxes.push(box); // Store the box for interaction
+        this.player.boxes.push(box); // Give the player access to the box
+    }
+
+    getRandomSpawnTime() {
+        // Return a random time between 2 and 5 seconds
+        return Math.floor(Math.random() * (5000 - 2000 + 1)) + 2000;
     }
 
     handleResize() {
@@ -209,7 +245,7 @@ export class Game {
             
             // Check if the zombie can attack the player
             if (zombie.canAttack(this.player.getPosition())) {
-                const damageAmount = 10; // Damage inflicted by the zombie
+                const damageAmount = 10;
                 this.player.takeDamage(damageAmount);
                 this.ui.updateHealth(this.player.health);
                 console.log(`Player health: ${this.player.health}`);
@@ -284,6 +320,8 @@ export class Game {
                 this.scene.remove(zombie.model);
             }
         });
+
+        clearInterval(this.boxSpawnInterval);
         
         // Remove player bullets
         if (this.player) {

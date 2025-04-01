@@ -22,7 +22,21 @@
             font-family: Arial, sans-serif;
             display: none; /* Hide game UI initially */
         }
-        #cr osshair {
+        .health-bar-container {
+            width: 200px;
+            height: 20px;
+            background-color: rgba(255, 255, 255, 0.2);
+            border: 2px solid #ff3333;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        .health-bar {
+            width: 100%;
+            height: 100%;
+            background-color: #ff3333;
+            transition: width 0.2s;
+        }
+        #crosshair {
             position: absolute;
             top: 50%;
             left: 50%;
@@ -258,9 +272,12 @@
 
     <!-- Game UI -->
     <div id="ui-container">
+        <div class="health-bar-container">
+            <div class="health-bar" id="health-bar"></div>
+        </div>
         <div id="score">Score: 0</div>
-        <div id="health">Health: 100</div>
         <div id="ammo">Ammo: 30</div>
+        <div id="'damage">Damage: 10</div>
     </div>
     <div id="crosshair">+</div>
     

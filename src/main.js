@@ -119,9 +119,3 @@ window.gameDebug = {
     startGame,
     handleGameOver
 };
-
-function loseHealth(amount) {
-    if (game) {
-        game.loseHealth(amount);
-    }
-}
