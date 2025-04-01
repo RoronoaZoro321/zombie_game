@@ -128,7 +128,7 @@ export class Game {
 
     spawnZombies() {
         // Determine zombie count and spawn distance
-        let zombieCount = 0;
+        let zombieCount = 5;
         let spawnDistance = 80;
 
         for (let i = 0; i < zombieCount; i++) {
