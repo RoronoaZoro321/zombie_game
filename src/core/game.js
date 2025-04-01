@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { Player } from '../components/player.js';
 import { Zombie } from '../components/zombie.js';
+import { Box } from '../components/box.js';
 // import { LevelFactory } from '../levels/levelFactory.js';
 import { Level } from '../levels/level.js';
 import { UI } from '../ui/ui.js';
@@ -12,6 +13,7 @@ export class Game {
         this.renderer = null;
         this.player = null;
         this.zombies = [];
+        this.boxes = [];
         this.level = null;
         this.ui = null;
         this.clock = new THREE.Clock();
@@ -53,7 +55,8 @@ export class Game {
 
         // Set up the UI
         this.ui = new UI();
-
+        
+        this.spawnBoxes();
         // Set up the zombies
         this.spawnZombies();
 
@@ -125,7 +128,7 @@ export class Game {
 
     spawnZombies() {
         // Determine zombie count and spawn distance
-        let zombieCount = 1;
+        let zombieCount = 0;
         let spawnDistance = 80;
 
         for (let i = 0; i < zombieCount; i++) {
@@ -143,6 +146,27 @@ export class Game {
             const zombie = new Zombie(this.scene, position, this.mapId);
             zombie.init();
             this.zombies.push(zombie);
+        }
+    }
+
+    spawnBoxes() {
+        // Determine box count and spawn distance
+        let boxCount = 1;
+        let spawnDistance = 80;
+
+        for (let i = 0; i < boxCount; i++) {
+            const position = new THREE.Vector3(
+                (Math.random() - 0.5) * spawnDistance,
+                0,
+                (Math.random() - 0.5) * spawnDistance
+            );
+            // Make sure boxes don't spawn too close to the player
+            if (position.distanceTo(this.player.getPosition()) < 10) {
+                position.z += 15;
+            }
+            const box = new Box(this.scene, position);
+            box.init();
+            this.boxes.push(box);
         }
     }
 
@@ -244,6 +268,15 @@ export class Game {
                     this.player.bullets.splice(bulletIndex, 1);
                 }
             });
+        });
+
+        // Check player is near a box
+        this.boxes.forEach(box => {
+            const distance = this.player.getPosition().distanceTo(box.position);
+            console.log(distance);
+            if (distance < 5) {
+                console.log('Press E to open the box');
+            }
         });
     }
 

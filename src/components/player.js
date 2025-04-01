@@ -448,4 +448,18 @@ export class Player {
     getPosition() {
         return this.camera.position;
     }
+
+    openBox(boxPosition){
+        const distanceToBox = this.camera.position.distanceTo(boxPosition);
+        if (distanceToBox < 3) {
+            // Logic to open the box and give player an ability
+            const randomAbility = this.ability[Math.floor(Math.random() * this.ability.length)];
+            console.log(`You opened the box and received: ${randomAbility}`);
+            // Implement ability logic here
+        }
+    }
+
+    playerPosition() {
+        return this.camera.position;
+    }
 }
