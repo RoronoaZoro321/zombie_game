@@ -165,7 +165,7 @@ export class Level {
     
     addForestObjects() {
         // Trees - keep them away from barriers
-        // this.placeRandomObjects(50, () => this.createTree(), 40, 10);
+        this.placeRandomObjects(30, () => this.createTree(), 40, 10);
         
         // Rocks
         this.placeRandomObjects(15, () => this.createRock(), 40, 5);
@@ -180,7 +180,7 @@ export class Level {
         const loader = new GLTFLoader();
         
         // Load the forest model
-        loader.load('../../assets/tree_1.glb', (gltf) => {
+        loader.load('../../assets/stalized_tree_1.glb', (gltf) => {
             const tree = gltf.scene;
             
             // Apply random scale variation to make trees look different
