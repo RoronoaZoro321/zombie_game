@@ -10,10 +10,21 @@ export class Level {
     }
     
     create() {
-        // Add floor
+        // Load the texture
+        const textureLoader = new THREE.TextureLoader();
+        const floorTexture = textureLoader.load('../../assets/grass.avif'); // Replace with your texture path
+
+        // Set texture properties (optional)
+        floorTexture.wrapS = THREE.RepeatWrapping;
+        floorTexture.wrapT = THREE.RepeatWrapping;
+        floorTexture.repeat.set(10, 10); // Adjust the repeat value as needed
+
+        // Create floor with texture
         const floorGeometry = new THREE.PlaneGeometry(this.mapSize, this.mapSize);
         const floorMaterial = new THREE.MeshStandardMaterial({ 
-            color: 0x556b2f,
+            map: floorTexture, // Use the loaded texture
+            //make it darker
+            color: 0x333333, // Darker color for forest
             roughness: 0.8,
             metalness: 0.2
         });
