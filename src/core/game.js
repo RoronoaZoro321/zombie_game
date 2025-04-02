@@ -25,6 +25,13 @@ export class Game {
         this.mapId = mapId;
         this.isPaused = false;
         this.boxSpawnInterval = null;
+        
+        // Difficulty progression properties
+        this.maxZombies = 5;
+        this.difficultyTimer = null;
+        this.difficultyLevel = 1;
+        this.zombieHealthMultiplier = 1;
+        this.zombieSpeedMultiplier = 1;
     }
 
     init() {
@@ -65,6 +72,9 @@ export class Game {
         
         // Set up the zombies
         this.spawnZombies();
+        
+        // Start the difficulty progression
+        this.startDifficultyProgression();
         
         // Initial box spawning - up to maxBoxes
         for (let i = 0; i < this.maxBoxes; i++) {
@@ -145,32 +155,67 @@ export class Game {
         }
     }
 
-    spawnZombies() {
-        // Determine zombie count and spawn distance
-        let zombieCount = 5;
-        let spawnDistance = 80;
-
-        for (let i = 0; i < zombieCount; i++) {
-            const position = new THREE.Vector3(
-                (Math.random() - 0.5) * spawnDistance,
-                0,
-                (Math.random() - 0.5) * spawnDistance
-            );
-            // Make sure zombies don't spawn too close to the player
-            if (position.distanceTo(this.player.getPosition()) < 10) {
-                position.z += 15;
+    startDifficultyProgression() {
+        // Increase difficulty every 30 seconds
+        this.difficultyTimer = setInterval(() => {
+            if (!this.isPaused && !this.gameOver) {
+                this.difficultyLevel++;
+                
+                // Increase max zombies (cap at 20)
+                if (this.maxZombies < 20) {
+                    this.maxZombies = Math.min(20, Math.floor(5 + this.difficultyLevel * 0.7));
+                }
+                
+                // Increase zombie stats
+                this.zombieHealthMultiplier = 1 + (this.difficultyLevel * 0.1);
+                this.zombieSpeedMultiplier = 1 + (this.difficultyLevel * 0.1);
+                
+                console.log(`Difficulty increased to level ${this.difficultyLevel}`);
+                console.log(`Max zombies: ${this.maxZombies}, Health: ${this.zombieHealthMultiplier}x, Speed: ${this.zombieSpeedMultiplier}x`);
+                
+                // Spawn additional zombies if below the new max
+                this.spawnAdditionalZombies();
             }
-            
-            // Pass map type to zombie for visual differences
-            const zombie = new Zombie(this.scene, position, this.mapId);
-            zombie.init();
-            this.zombies.push(zombie);
+        }, 10000); // Every 10 seconds
+    }
+    
+    spawnAdditionalZombies() {
+        const zombiesToSpawn = this.maxZombies - this.zombies.length;
+        
+        for (let i = 0; i < zombiesToSpawn; i++) {
+            this.spawnZombie();
         }
     }
+    
+    spawnZombie() {
+        // Determine spawn distance based on map
+        const spawnDistance = (this.mapId === 3) ? 25 : 80;
+        
+        const position = new THREE.Vector3(
+            (Math.random() - 0.5) * spawnDistance,
+            0,
+            (Math.random() - 0.5) * spawnDistance
+        );
+        // Make sure zombies don't spawn too close to the player
+        if (position.distanceTo(this.player.getPosition()) < 15) {
+            position.z += 20;
+        }
+        
+        const zombie = new Zombie(this.scene, position, this.mapId);
+        
+        // Apply difficulty multipliers
+        zombie.health = Math.ceil(zombie.health * this.zombieHealthMultiplier);
+        zombie.speed = zombie.speed * this.zombieSpeedMultiplier;
+        
+        zombie.init();
+        this.zombies.push(zombie);
+    }
 
-    startBoxSpawning() {
-        // This method is no longer needed as boxes are spawned after interaction
-        // We'll keep it empty for compatibility
+    spawnZombies() {
+        // Initial spawn of zombies up to maxZombies
+        for (let i = 0; i < this.maxZombies; i++) {
+            this.spawnZombie();
+        }
     }
 
     spawnBox() {
@@ -257,26 +302,11 @@ export class Game {
                 this.ui.updateScore(this.score * this.player.multiplier);
                 console.log(`Score: ${this.score}`);
                 
-                // Respawn zombie if there are less than the map's zombie count
-                let maxZombies = 1;
-                
-                if (this.zombies.length < maxZombies) {
+                // Respawn zombie if there are less than the max zombie count
+                if (this.zombies.length < this.maxZombies) {
                     setTimeout(() => {
-                        // Determine spawn distance based on map
-                        const spawnDistance = (this.mapId === 3) ? 25 : 40;
-                        
-                        const position = new THREE.Vector3(
-                            (Math.random() - 0.5) * spawnDistance,
-                            0,
-                            (Math.random() - 0.5) * spawnDistance
-                        );
-                        if (position.distanceTo(this.player.getPosition()) < 10) {
-                            position.z += 15;
-                        }
-                        
-                        const newZombie = new Zombie(this.scene, position, this.mapId);
-                        newZombie.init();
-                        this.zombies.push(newZombie);
+                        // Spawn a new zombie with current difficulty
+                        this.spawnZombie();
                     }, 3000);
                 }
             }
@@ -349,6 +379,11 @@ export class Game {
     cleanup() {
         // Stop game loop
         this.gameOver = true;
+    
+        // Stop difficulty progression timer
+        if (this.difficultyTimer) {
+            clearInterval(this.difficultyTimer);
+        }
     
         // Remove event listeners
         window.removeEventListener('resize', this.handleResize);
