@@ -15,7 +15,7 @@ export class Game {
         this.player = null;
         this.zombies = [];
         this.boxes = [];
-        this.maxBoxes = 3;
+        this.maxBoxes = 2; // Changed from 3 to 2 as per requirement
         this.openedBoxesCount = 0;
         this.level = null;
         this.ui = null;
@@ -65,7 +65,14 @@ export class Game {
         
         // Set up the zombies
         this.spawnZombies();
-        this.startBoxSpawning();
+        
+        // Initial box spawning - up to maxBoxes
+        for (let i = 0; i < this.maxBoxes; i++) {
+            this.spawnBox();
+        }
+        
+        // Add event listener for box interactions
+        window.addEventListener('box-opened', (event) => this.handleBoxOpened(event.detail.box));
 
         // Handle window resize
         window.addEventListener('resize', () => this.handleResize());
@@ -162,12 +169,18 @@ export class Game {
     }
 
     startBoxSpawning() {
-        this.boxSpawnInterval = setInterval(() => {
-            this.spawnBox();
-        }, this.getRandomSpawnTime());
+        // This method is no longer needed as boxes are spawned after interaction
+        // We'll keep it empty for compatibility
     }
 
     spawnBox() {
+        console.log('Spawning box');
+        
+        // Only spawn if below maximum
+        if (this.boxes.length >= this.maxBoxes) {
+            return;
+        }
+        
         const spawnDistance = 80;
         const position = new THREE.Vector3(
             (Math.random() - 0.5) * spawnDistance,
@@ -186,9 +199,32 @@ export class Game {
         this.player.boxes.push(box); // Give the player access to the box
     }
 
+    handleBoxOpened(box) {
+        // Remove the opened box from the boxes array
+        const index = this.boxes.indexOf(box);
+        if (index !== -1) {
+            this.boxes.splice(index, 1);
+            
+            // Remove from player's boxes array as well
+            const playerBoxIndex = this.player.boxes.indexOf(box);
+            if (playerBoxIndex !== -1) {
+                this.player.boxes.splice(playerBoxIndex, 1);
+            }
+            
+            // Spawn a new box since one was opened (maintaining max of 2)
+            if (this.boxes.length < this.maxBoxes) {
+                setTimeout(() => {
+                    this.spawnBox();
+                }, this.getRandomSpawnTime());
+            }
+        }
+    }
+
     getRandomSpawnTime() {
-        // Return a random time between 2 - 5 seconds
-        return Math.floor(Math.random() * 3000) + 2000;
+        // Return a random time between 10 - 20 seconds
+        const time = Math.floor(Math.random() * 10000) + 10000;
+        console.log(`Generating box in ${time / 1000} seconds`);
+        return time;
     }
 
     handleResize() {
@@ -316,6 +352,7 @@ export class Game {
     
         // Remove event listeners
         window.removeEventListener('resize', this.handleResize);
+        window.removeEventListener('box-opened', this.handleBoxOpened);
     
         // Remove all zombies
         this.zombies.forEach(zombie => {

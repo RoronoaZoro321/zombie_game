@@ -34,10 +34,15 @@ export class Box {
             this.opened = true; // Set the flag to true
             this.scene.remove(this.model); // Remove the model from the scene
             this.spawnLoot(player); // Spawn loot after removing the box
+            
+            // Dispatch a custom event to notify that a box was opened
+            const boxOpenedEvent = new CustomEvent('box-opened', {
+                detail: { box: this }
+            });
+            window.dispatchEvent(boxOpenedEvent);
         }
     }
 
-    // In MultipleFiles/box.js
     spawnLoot(player) {
         const lootType = this.ability[Math.floor(Math.random() * this.ability.length)];
         let lootValue = 0;
