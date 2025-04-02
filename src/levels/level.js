@@ -12,7 +12,7 @@ export class Level {
     create() {
         // Load the texture
         const textureLoader = new THREE.TextureLoader();
-        const floorTexture = textureLoader.load('../../assets/grass.avif'); // Replace with your texture path
+        const floorTexture = textureLoader.load('../../assets/grass.webp'); // Replace with your texture path
 
         // Set texture properties (optional)
         floorTexture.wrapS = THREE.RepeatWrapping;
@@ -25,8 +25,6 @@ export class Level {
             map: floorTexture, // Use the loaded texture
             //make it darker
             color: 0x333333, // Darker color for forest
-            roughness: 0.8,
-            metalness: 0.2
         });
         const floor = new THREE.Mesh(floorGeometry, floorMaterial);
         floor.rotation.x = -Math.PI / 2; // Rotate to be horizontal
@@ -200,13 +198,20 @@ export class Level {
     }
     
     createRock(color = 0x888888, size = 0.5) {
+        const rockTexture = new THREE.TextureLoader().load('../../assets/rock.jpeg');
+        rockTexture.wrapS = THREE.RepeatWrapping;
+        rockTexture.wrapT = THREE.RepeatWrapping;
+        rockTexture.repeat.set(10, 10); // Adjust the repeat value as needed
+
         const rockGeometry = new THREE.DodecahedronGeometry(
             size + Math.random() * 0.5,
             0
         );
         const rockMaterial = new THREE.MeshLambertMaterial({
+            map: rockTexture,
             color: color,
-            flatShading: true
+            roughness: 0.9,
+            metalness: 0.1
         });
         const rock = new THREE.Mesh(rockGeometry, rockMaterial);
         rock.position.y = size / 2;
