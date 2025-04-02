@@ -198,13 +198,20 @@ export class Level {
     }
     
     createRock(color = 0x888888, size = 0.5) {
+        const rockTexture = new THREE.TextureLoader().load('../../assets/rock.jpeg');
+        rockTexture.wrapS = THREE.RepeatWrapping;
+        rockTexture.wrapT = THREE.RepeatWrapping;
+        rockTexture.repeat.set(10, 10); // Adjust the repeat value as needed
+
         const rockGeometry = new THREE.DodecahedronGeometry(
             size + Math.random() * 0.5,
             0
         );
         const rockMaterial = new THREE.MeshLambertMaterial({
+            map: rockTexture,
             color: color,
-            flatShading: true
+            roughness: 0.9,
+            metalness: 0.1
         });
         const rock = new THREE.Mesh(rockGeometry, rockMaterial);
         rock.position.y = size / 2;
