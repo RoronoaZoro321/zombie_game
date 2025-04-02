@@ -164,8 +164,10 @@ export class Level {
     }
     
     addForestObjects() {
-        // Trees - keep them away from barriers
-        this.placeRandomObjects(15, () => this.createTree(), 40, 10);
+        // Place three different types of trees with specific counts
+        this.placeRandomObjects(20, () => this.createTree('../../assets/tree1.glb', 0.1), 40, 10); // tree1 - 15 trees
+        this.placeRandomObjects(10, () => this.createTree('../../assets/tree2.glb', 0.6), 40, 10); // tree2 - 7 trees
+        this.placeRandomObjects(3, () => this.createTree('../../assets/tree3.glb', 0.4), 40, 10); // tree3 - 3 trees
         
         // Rocks
         this.placeRandomObjects(15, () => this.createRock(), 40, 5);
@@ -174,17 +176,17 @@ export class Level {
         // this.addFogParticles();
     }
     
-    createTree() {
+    createTree(modelPath, scaling) {
         // Create a group to hold the loaded tree
         const treeGroup = new THREE.Group();
         const loader = new GLTFLoader();
-        
-        // Load the forest model
-        loader.load('../../assets/tree.glb', (gltf) => {
+          
+        // Load the forest model with the specified path
+        loader.load(modelPath, (gltf) => {
             const tree = gltf.scene;
             
             // Apply random scale variation to make trees look different
-            const scale = 0.8 + Math.random() * 0.4;
+            const scale = scaling + Math.random() * 0.4;
             tree.scale.set(scale, scale, scale);
             
             // Apply random rotation for variety
