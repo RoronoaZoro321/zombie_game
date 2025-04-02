@@ -13,7 +13,8 @@ export class Player {
         this.runSpeedMultiplier = 1.7; // Multiplier for running speed
         this.health = 100;
         this.ammo = 30;
-        this.damage = 10;
+        this.multiplier = 1;
+        this.scoreDuration = 0;
         this.canShoot = true;
         this.reloadTime = 1.5;
         this.bullets = [];
@@ -134,6 +135,21 @@ export class Player {
         // Create flashlight if needed
         if (this.hasFlashlight) {
             this.createFlashlight();
+        }
+
+        // start multiplier timer
+        if (this.multiplier > 1) {
+            this.startMultiplierTimer();
+        }
+    }
+
+    startMultiplierTimer() {
+        if (this.scoreDuration > 0) {
+            setTimeout(() => {
+                this.multiplier = 1;
+                this.scoreDuration = 0;
+                document.getElementById('multiplier').style.display = 'none'; // Hide multiplier UI
+            }, this.scoreDuration * 1000);
         }
     }
     
@@ -386,17 +402,22 @@ export class Player {
         // Check player is near a box
         this.boxes.forEach(box => {
             const distance = this.getPosition().distanceTo(box.position);
-            if (distance < 5) { // Adjust distance as needed
-                console.log('Press E to open the box');
+            if (distance < 4.5) { // Adjust distance as needed
+                this.showOpenBoxMessage(true); // Show message to open the box
                 document.addEventListener('keydown', (event) => {
                     if (event.key === 'e') {
-                        console.log('Interacting with box');
                         box.interact(this); // Call the interact method on the box
-                        
                     }
                 }, { once: true }); // Use { once: true } to ensure the listener is removed after execution
+            } else {
+                this.showOpenBoxMessage(false); // Hide message if not close
             }
         });
+    }
+
+    showOpenBoxMessage(show) {
+        const messageElement = document.getElementById('open-box-message'); // Ensure you have this element in your HTML
+        messageElement.style.display = show ? 'block' : 'none'; // Show or hide the message
     }
     
     updateAimingState(delta) {

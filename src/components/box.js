@@ -7,8 +7,8 @@ export class Box {
         this.scene = scene;
         this.position = position;
         this.model = null;
-        this.ability = ['health', 'ammo', 'damage', 'speed'];
-        this.open = false;
+        this.ability = ['health', 'ammo', 'speed', 'bonus']; // Add more abilities as needed
+        this.opened = false;
     }
 
     init() {
@@ -30,10 +30,10 @@ export class Box {
     }
 
     interact(player) {
-        if (!this.open) { // Check if the box is already opened
-            this.open = true; // Set the flag to true
-            this.scene.remove(this.model);
-            this.spawnLoot(player);
+        if (!this.opened) { // Check if the box is already opened
+            this.opened = true; // Set the flag to true
+            this.scene.remove(this.model); // Remove the model from the scene
+            this.spawnLoot(player); // Spawn loot after removing the box
         }
     }
 
@@ -54,16 +54,37 @@ export class Box {
                 player.ammo += lootValue;
                 ui.updateAmmo(player.ammo);
                 break;
-            case 'damage':
-                lootValue = Math.floor(Math.random() * 10) + 5; // Random damage between 5 and 15
-                player.damage += lootValue; // Assuming player has a damage property
-                ui.updateDamage(player.damage);
-                break;
             case 'speed':
                 lootValue = Math.random() * 0.2 + 0.1; // Random speed increase between 0.1 and 0.3
                 player.moveSpeed += lootValue; // Assuming player has a moveSpeed property
                 console.log(`Player received ${lootValue} speed increase. Current speed: ${player.moveSpeed}`);
                 break;
+            case 'bonus':
+                lootValue = 2;
+                player.multiplier = lootValue; // Assuming player has a scoreMultiplier property
+                player.scoreDuration = 60; // Duration in seconds
+                console.log(`Player received a bonus score multiplier of ${player.multiplier} for ${player.scoreDuration} seconds.`);
+                
+                // Show the bonus div and start countdown
+                ui.updateDamage(player.scoreDuration); // Update the bonus display
+                document.getElementById('bonus').style.display = 'block'; // Show the bonus div
+                
+                // Start countdown to hide the bonus div
+                let remainingTime = player.scoreDuration;
+                const countdownInterval = setInterval(() => {
+                    remainingTime--;
+                    ui.updateDamage(remainingTime); // Update the displayed time
+                    
+                    if (remainingTime <= 0) {
+                        clearInterval(countdownInterval); // Stop the countdown
+                        document.getElementById('bonus').style.display = 'none'; // Hide the bonus div after the duration
+                    }
+                }, 1000); // Update every second
+                break;
+            }
         }
+
+    isOpen() {
+        return this.opened;
     }
 }
