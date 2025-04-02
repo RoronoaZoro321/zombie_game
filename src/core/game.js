@@ -436,6 +436,10 @@ export class Game {
         if (this.scene) {
             this.disposeScene(this.scene);
         }
+
+        this.ui.updateHealth(100); // Reset health bar
+        this.ui.updateScore(0); // Reset score
+        this.ui.updateAmmo(30); // Reset ammo
     }
     
     disposeScene(scene) {
