@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import audioManager from '../audio/audioManager.js';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 // import { loop } from 'three/tsl';
 
 export class Level {
@@ -164,7 +165,7 @@ export class Level {
     
     addForestObjects() {
         // Trees - keep them away from barriers
-        this.placeRandomObjects(50, () => this.createTree(), 40, 10);
+        // this.placeRandomObjects(50, () => this.createTree(), 40, 10);
         
         // Rocks
         this.placeRandomObjects(15, () => this.createRock(), 40, 5);
@@ -174,27 +175,37 @@ export class Level {
     }
     
     createTree() {
-        const tree = new THREE.Group();
+        // Create a group to hold the loaded tree
+        const treeGroup = new THREE.Group();
+        const loader = new GLTFLoader();
         
-        // Tree trunk
-        const trunkGeometry = new THREE.CylinderGeometry(0.2, 0.5, 3, 8);
-        const trunkMaterial = new THREE.MeshLambertMaterial({ color: 0x8b4513 });
-        const trunk = new THREE.Mesh(trunkGeometry, trunkMaterial);
-        trunk.position.y = 1.5;
-        trunk.castShadow = true;
-        trunk.receiveShadow = true;
-        tree.add(trunk);
+        // Load the forest model
+        loader.load('../../assets/tree_1.glb', (gltf) => {
+            const tree = gltf.scene;
+            
+            // Apply random scale variation to make trees look different
+            const scale = 0.8 + Math.random() * 0.4;
+            tree.scale.set(scale, scale, scale);
+            
+            // Apply random rotation for variety
+            tree.rotation.y = Math.random() * Math.PI * 2;
+            
+            // Set shadow properties for the entire tree model
+            tree.traverse((child) => {
+                if (child.isMesh) {
+                    child.castShadow = true;
+                    child.receiveShadow = true;
+                }
+            });
+            
+            // Add the loaded tree model to the group
+            treeGroup.add(tree);
+        }, undefined, (error) => {
+            console.error('Error loading tree model:', error);
+        });
         
-        // Tree leaves
-        const leavesGeometry = new THREE.ConeGeometry(2, 4, 8);
-        const leavesMaterial = new THREE.MeshLambertMaterial({ color: 0x228b22 });
-        const leaves = new THREE.Mesh(leavesGeometry, leavesMaterial);
-        leaves.position.y = 4.5;
-        leaves.castShadow = true;
-        leaves.receiveShadow = true;
-        tree.add(leaves);
-        
-        return tree;
+        // Return the group immediately so it can be positioned
+        return treeGroup;
     }
     
     createRock(color = 0x888888, size = 0.5) {
