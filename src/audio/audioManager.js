@@ -14,6 +14,7 @@ export class AudioManager {
         // Zombie sounds
         this.loadSound('zombieGrowl', '../assets/audio/zombie_growl.mp3');
         this.loadSound('zombieAttack', '../assets/audio/zombie_attack.mp3');
+        this.loadSound('zombieDeath', '../assets/audio/zombie_death.mp3');
         this.loadSound('a', '../assets/audio/zombie_death.mp3');
         
         // Player movement sounds

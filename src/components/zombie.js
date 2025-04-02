@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import audioManager from '../audio/audioManager.js';
 
 export class Zombie {
@@ -8,18 +9,9 @@ export class Zombie {
         this.model = null;
         this.mapId = mapId;
         
-        // Adjust zombie properties based on map
-        if (this.mapId === 1) {
-            // Forest zombies - slower but tougher
-            this.speed = 1.2 + Math.random() * 0.5;
-            this.health = 3;
-            this.attackRange = 2;
-        } else {
-            // Desert zombies - faster but weaker
-            this.speed = 2 + Math.random() * 0.8;
-            this.health = 2;
-            this.attackRange = 3;
-        }
+        this.speed = 1.2 + Math.random() * 0.5;
+        this.health = 3;
+        this.attackRange = 2;
         
         this.attackCooldown = 5;
         this.lastAttackTime = 0;
@@ -28,128 +20,113 @@ export class Zombie {
         this.lastGrowlTime = 0;
         this.growlInterval = 5000 + Math.random() * 8000; // Random interval between growls
         this.playedDeathSound = false;
+
+        // Animation properties
+        this.mixer = null;
+        this.animations = {};
+        this.currentAnimation = null;
+        
+        // Model loading properties
+        this.isLoaded = false;
+        this.loader = new GLTFLoader();
+
+        // Adjust collision-related properties to be more precise
+        this.boundingBox = null;
+        this.collisionRadius = 0.8; // Reduced from 1.5 for more precise hit detection
+        this.collisionHeight = 2.4; // Reduced from 3.0 to better match the zombie model height
     }
     
     init() {
-        // Create a zombie model based on map type
-        if (this.mapId === 1) {
-            this.createForestZombie();
-        } else {
-            this.createDesertZombie();
-        }
+        // Choose model based on mapId
+        this.loadModel('../../assets/models/zombie/scene.gltf', 'forest');
     }
     
-    createForestZombie() {
-        // Create a simple zombie model
-        const body = new THREE.Group();
-        
-        // Zombie body
-        const bodyGeometry = new THREE.BoxGeometry(0.8, 1.8, 0.4);
-        const bodyMaterial = new THREE.MeshLambertMaterial({ color: 0x2d572c });
-        const bodyMesh = new THREE.Mesh(bodyGeometry, bodyMaterial);
-        bodyMesh.position.y = 0.9;
-        body.add(bodyMesh);
-        
-        // Zombie head
-        const headGeometry = new THREE.BoxGeometry(0.6, 0.6, 0.6);
-        const headMaterial = new THREE.MeshLambertMaterial({ color: 0x2d572c });
-        const headMesh = new THREE.Mesh(headGeometry, headMaterial);
-        headMesh.position.y = 2;
-        body.add(headMesh);
-        
-        // Zombie arms
-        const armGeometry = new THREE.BoxGeometry(0.2, 1, 0.2);
-        const armMaterial = new THREE.MeshLambertMaterial({ color: 0x2d572c });
-        
-        const leftArm = new THREE.Mesh(armGeometry, armMaterial);
-        leftArm.position.set(-0.5, 0.9, 0);
-        body.add(leftArm);
-        
-        const rightArm = new THREE.Mesh(armGeometry, armMaterial);
-        rightArm.position.set(0.5, 0.9, 0);
-        body.add(rightArm);
-        
-        // Zombie legs
-        const legGeometry = new THREE.BoxGeometry(0.3, 0.9, 0.3);
-        const legMaterial = new THREE.MeshLambertMaterial({ color: 0x2d572c });
-        
-        const leftLeg = new THREE.Mesh(legGeometry, legMaterial);
-        leftLeg.position.set(-0.25, 0, 0);
-        body.add(leftLeg);
-        
-        const rightLeg = new THREE.Mesh(legGeometry, legMaterial);
-        rightLeg.position.set(0.25, 0, 0);
-        body.add(rightLeg);
-        
-        // Add zombie to scene
-        body.position.copy(this.position);
-        this.model = body;
-        this.scene.add(this.model);
-    }
-    
-    createDesertZombie() {
-        // Create a desert zombie model - different color and slightly different proportions
-        const body = new THREE.Group();
-        
-        // Zombie body - more withered
-        const bodyGeometry = new THREE.BoxGeometry(0.7, 1.7, 0.35);
-        const bodyMaterial = new THREE.MeshLambertMaterial({ color: 0x9c6d51 }); // Desert mummified color
-        const bodyMesh = new THREE.Mesh(bodyGeometry, bodyMaterial);
-        bodyMesh.position.y = 0.85;
-        body.add(bodyMesh);
-        
-        // Zombie head - slightly smaller
-        const headGeometry = new THREE.BoxGeometry(0.55, 0.55, 0.55);
-        const headMaterial = new THREE.MeshLambertMaterial({ color: 0x9c6d51 });
-        const headMesh = new THREE.Mesh(headGeometry, headMaterial);
-        headMesh.position.y = 1.9;
-        body.add(headMesh);
-        
-        // Zombie arms - thinner
-        const armGeometry = new THREE.BoxGeometry(0.15, 0.9, 0.15);
-        const armMaterial = new THREE.MeshLambertMaterial({ color: 0x9c6d51 });
-        
-        const leftArm = new THREE.Mesh(armGeometry, armMaterial);
-        leftArm.position.set(-0.45, 0.85, 0);
-        body.add(leftArm);
-        
-        const rightArm = new THREE.Mesh(armGeometry, armMaterial);
-        rightArm.position.set(0.45, 0.85, 0);
-        body.add(rightArm);
-        
-        // Zombie legs - thinner
-        const legGeometry = new THREE.BoxGeometry(0.25, 0.85, 0.25);
-        const legMaterial = new THREE.MeshLambertMaterial({ color: 0x9c6d51 });
-        
-        const leftLeg = new THREE.Mesh(legGeometry, legMaterial);
-        leftLeg.position.set(-0.22, 0, 0);
-        body.add(leftLeg);
-        
-        const rightLeg = new THREE.Mesh(legGeometry, legMaterial);
-        rightLeg.position.set(0.22, 0, 0);
-        body.add(rightLeg);
-        
-        // Add some bandage/wrapping details for mummy appearance
-        const addBandage = (x, y, z, width, height, depth, rotation = 0) => {
-            const bandageGeometry = new THREE.BoxGeometry(width, height, depth);
-            const bandageMaterial = new THREE.MeshLambertMaterial({ color: 0xe0cfb1 });
-            const bandage = new THREE.Mesh(bandageGeometry, bandageMaterial);
-            bandage.position.set(x, y, z);
-            if (rotation) {
-                bandage.rotation.y = rotation;
+    loadModel(modelPath, type) {
+        this.loader.load(modelPath, (gltf) => {
+            this.model = gltf.scene;
+            
+            // Apply scale adjustments
+            this.model.scale.set(1.5, 1.5, 1.5);
+            
+            // Set the position
+            this.model.position.copy(this.position);
+            
+            // Setup animations if available
+            if (gltf.animations && gltf.animations.length > 0) {
+                this.mixer = new THREE.AnimationMixer(this.model);
+                
+                gltf.animations.forEach((clip) => {
+                    const name = clip.name.toLowerCase();
+                    this.animations[name] = this.mixer.clipAction(clip);
+                    
+                    // Configure animation settings
+                    if (name.includes('walk') || name.includes('run')) {
+                        this.animations[name].setEffectiveTimeScale(1.0);
+                        this.animations[name].setEffectiveWeight(1.0);
+                    }
+                    
+                    if (name.includes('attack')) {
+                        this.animations[name].setEffectiveTimeScale(1.5); // Faster attack
+                        this.animations[name].setLoop(THREE.LoopOnce);
+                        this.animations[name].clampWhenFinished = true;
+                    }
+                    
+                    if (name.includes('dead') || name.includes('hurt')) {
+                        this.animations[name].setLoop(THREE.LoopOnce);
+                        this.animations[name].clampWhenFinished = true;
+                    }
+                });
+                
+                // Start with walk animation
+                this.playAnimation('walk');
             }
-            body.add(bandage);
-        };
+            
+            // Add zombie to scene
+            this.scene.add(this.model);
+            this.isLoaded = true;
+            
+            // Create bounding box helper for collision detection
+            // Calculate model dimensions for accurate collision
+            const bbox = new THREE.Box3().setFromObject(this.model);
+            const size = new THREE.Vector3();
+            bbox.getSize(size);
+            
+            // Create invisible cylinder/box around zombie for collision detection
+            // You can uncomment the following code for debugging:
+            /*
+            this.boundingBox = new THREE.Mesh(
+                new THREE.CylinderGeometry(this.collisionRadius, this.collisionRadius, this.collisionHeight, 8),
+                new THREE.MeshBasicMaterial({color: 0xff0000, wireframe: true, transparent: true, opacity: 0.5})
+            );
+            this.boundingBox.position.copy(this.model.position);
+            this.boundingBox.position.y += this.collisionHeight / 2;
+            this.scene.add(this.boundingBox);
+            */
+        }, 
+        // Progress callback
+        (xhr) => {
+            // console.log((xhr.loaded / xhr.total * 100) + '% loaded');
+        },
+        // Error callback
+        (error) => {
+            console.error('Error loading zombie model:', error);
+            // Fallback to primitive model if loading fails
+        });
+    }
+    
+    playAnimation(name) {
+        if (!this.animations[name]) return;
         
-        // Add a few bandages
-        addBandage(0, 1.2, 0.2, 0.7, 0.1, 0.4);
-        addBandage(0, 0.5, 0.2, 0.7, 0.12, 0.4);
-        addBandage(0, 1.8, 0.0, 0.55, 0.1, 0.55);
+        // Fade out current animation
+        if (this.currentAnimation && this.animations[this.currentAnimation]) {
+            this.animations[this.currentAnimation].fadeOut(0.3);
+        }
         
-        // Add zombie to scene
-        body.position.copy(this.position);
-        this.model = body;
-        this.scene.add(this.model);
+        // Fade in new animation
+        this.animations[name].reset();
+        this.animations[name].fadeIn(0.3);
+        this.animations[name].play();
+        this.currentAnimation = name;
     }
     
     update(delta, playerPosition) {
@@ -157,8 +134,28 @@ export class Zombie {
             if (!this.playedDeathSound) {
                 audioManager.play('zombieDeath', { volume: 0.5 });
                 this.playedDeathSound = true;
+                
+                // Play death animation
+                const deathAnims = ['dead1', 'dead2', 'dead3'];
+                const randomDeath = deathAnims[Math.floor(Math.random() * deathAnims.length)];
+                if (this.animations[randomDeath]) {
+                    this.playAnimation(randomDeath);
+                }
+            }
+            
+            // Continue updating mixer for death animation
+            if (this.mixer) {
+                this.mixer.update(delta);
             }
             return;
+        }
+        
+        // If model isn't loaded yet, skip update
+        if (!this.isLoaded || !this.model) return;
+        
+        // Update animation mixer if available
+        if (this.mixer) {
+            this.mixer.update(delta);
         }
         
         // Direction to player
@@ -200,34 +197,61 @@ export class Zombie {
             );
         }
         
-        // Animate zombie walking - different animation speeds based on map type
-        const animSpeed = this.mapId === 1 ? 2 : 3; // Desert zombies have faster animation
-        const time = Date.now() * 0.005;
-        this.model.children[2].rotation.x = Math.sin(time * animSpeed) * 0.4; // Left arm
-        this.model.children[3].rotation.x = Math.sin(time * animSpeed + Math.PI) * 0.4; // Right arm
-        this.model.children[4].rotation.x = Math.sin(time * animSpeed) * 0.4; // Left leg
-        this.model.children[5].rotation.x = Math.sin(time * animSpeed + Math.PI) * 0.4; // Right leg
+        // Update animation based on movement speed
+        if (this.speed > 2.0 && this.animations['run']) {
+            if (this.currentAnimation !== 'run') {
+                this.playAnimation('run');
+            }
+        } else if (this.currentAnimation !== 'walk' && this.currentAnimation !== 'walk2' && 
+                  !this.currentAnimation?.includes('attack') && !this.currentAnimation?.includes('hurt')) {
+            // Randomly choose between walk and walk2
+            this.playAnimation(Math.random() > 0.5 ? 'walk' : 'walk2');
+        }
+        
+        // Update bounding box position if it exists (for debugging)
+        if (this.boundingBox) {
+            this.boundingBox.position.x = this.model.position.x;
+            this.boundingBox.position.z = this.model.position.z;
+            this.boundingBox.position.y = this.model.position.y + this.collisionHeight / 2;
+            this.boundingBox.rotation.y = this.model.rotation.y;
+        }
     }
     
     takeDamage() {
         this.health--;
         
-        // Make zombie flash red when hit
-        const originalColors = [];
-        this.model.children.forEach(part => {
-            if (part.material) {
-                originalColors.push(part.material.color.clone());
-                part.material.color.set(0xff0000);
-            }
-        });
+        // Play hurt animation if available
+        if (this.animations['hurt']) {
+            this.playAnimation('hurt');
+            
+            // Return to walking after hurt animation
+            setTimeout(() => {
+                if (!this.isDead() && (this.currentAnimation === 'hurt' || !this.currentAnimation)) {
+                    this.playAnimation(Math.random() > 0.5 ? 'walk' : 'walk2');
+                }
+            }, 800); // Adjust timing based on animation length
+        }
         
-        setTimeout(() => {
-            this.model.children.forEach((part, index) => {
-                if (part.material && index < originalColors.length) {
-                    part.material.color.copy(originalColors[index]);
+        // Make zombie flash red when hit
+        if (this.model) {
+            this.model.traverse((node) => {
+                if (node.isMesh && node.material) {
+                    // Store original color if not already stored
+                    if (!node.userData.originalColor) {
+                        node.userData.originalColor = node.material.color.clone();
+                    }
+                    node.material.color.set(0xff0000);
                 }
             });
-        }, 100);
+            
+            setTimeout(() => {
+                this.model.traverse((node) => {
+                    if (node.isMesh && node.material && node.userData.originalColor) {
+                        node.material.color.copy(node.userData.originalColor);
+                    }
+                });
+            }, 100);
+        }
     }
     
     isDead() {
@@ -235,6 +259,9 @@ export class Zombie {
     }
     
     canAttack(playerPosition) {
+        // If model isn't loaded yet, can't attack
+        if (!this.isLoaded || !this.model) return false;
+        
         const currentTime = Date.now();
         const distanceToPlayer = this.model.position.distanceTo(playerPosition);
     
@@ -251,6 +278,18 @@ export class Zombie {
         // Zombie can attack
         this.lastAttackTime = currentTime;
         
+        // Play attack animation
+        if (this.animations['attack2']) {
+            this.playAnimation('attack2');
+            
+            // Return to walking after attack animation
+            setTimeout(() => {
+                if (!this.isDead() && (this.currentAnimation === 'attack2' || !this.currentAnimation)) {
+                    this.playAnimation(Math.random() > 0.5 ? 'walk' : 'walk2');
+                }
+            }, 1000); // Adjust timing based on animation length
+        }
+        
         // Play attack sound
         audioManager.play('zombieAttack', { volume: 0.6 });
         
@@ -258,6 +297,36 @@ export class Zombie {
     }
     
     getPosition() {
+        // Return default position if model isn't loaded yet
+        if (!this.model) return this.position;
         return this.model.position;
+    }
+    
+    // Check if bullet hits the zombie with improved collision detection
+    checkCollision(bulletPosition) {
+        if (!this.model) return false;
+        
+        // Get zombie position
+        const zombiePosition = this.model.position.clone();
+        
+        // Check horizontal distance (XZ plane)
+        const horizontalDistance = new THREE.Vector2(
+            bulletPosition.x - zombiePosition.x,
+            bulletPosition.z - zombiePosition.z
+        ).length();
+        
+        // Check if within horizontal radius
+        if (horizontalDistance > this.collisionRadius) {
+            return false;
+        }
+        
+        // Check vertical position (Y axis) - bullet should be within the zombie's height
+        // Raise the bottom of collision area slightly to match model better
+        if (bulletPosition.y < zombiePosition.y + 0.3 || 
+            bulletPosition.y > zombiePosition.y + this.collisionHeight) {
+            return false;
+        }
+        
+        return true;
     }
 }

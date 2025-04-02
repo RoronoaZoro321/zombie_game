@@ -58,9 +58,6 @@ export class Level {
         audioManager.play('environment', { volume: 0.4, loop: true });
     }
 
-
-    
-    
     cleanup() {   
         // Stop all environment sounds
         audioManager.stop('environment');
@@ -164,7 +161,7 @@ export class Level {
         this.placeRandomObjects(15, () => this.createRock(), 40, 5);
         
         // Add some fog particles
-        this.addFogParticles();
+        // this.addFogParticles();
     }
     
     createTree() {

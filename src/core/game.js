@@ -282,7 +282,8 @@ export class Game {
             
             // Check for zombie hits
             this.zombies.forEach(zombie => {
-                if (bullet.checkCollision(zombie.getPosition(), 1)) {
+                // Use the zombie's own collision detection instead of a simple distance check
+                if (zombie.checkCollision(bullet.mesh.position)) {
                     zombie.takeDamage();
                     this.scene.remove(bullet.mesh);
                     this.player.bullets.splice(bulletIndex, 1);
