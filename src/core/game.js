@@ -229,7 +229,7 @@ export class Game {
         const spawnDistance = 80;
         const position = new THREE.Vector3(
             (Math.random() - 0.5) * spawnDistance,
-            0,
+            -0.2,
             (Math.random() - 0.5) * spawnDistance
         );
 
