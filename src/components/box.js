@@ -41,29 +41,34 @@ export class Box {
     spawnLoot(player) {
         const lootType = this.ability[Math.floor(Math.random() * this.ability.length)];
         let lootValue = 0;
-
+        let announcementMessage = '';
+    
         const ui = new UI();
         switch (lootType) {
             case 'health':
                 lootValue = Math.floor(Math.random() * 50) + 50; // Random health between 50 and 100
                 player.health = Math.min(player.health + lootValue, 100); // Ensure health does not exceed 100
                 ui.updateHealth(player.health);
+                announcementMessage = `You received ${lootValue} health!`;
                 break;
             case 'ammo':
                 lootValue = Math.floor(Math.random() * 30) + 20; // Random ammo between 20 and 50
                 player.ammo += lootValue;
                 ui.updateAmmo(player.ammo);
+                announcementMessage = `You received ${lootValue} ammo!`;
                 break;
             case 'speed':
                 lootValue = Math.random() * 0.2 + 0.1; // Random speed increase between 0.1 and 0.3
                 player.moveSpeed += lootValue; // Assuming player has a moveSpeed property
                 console.log(`Player received ${lootValue} speed increase. Current speed: ${player.moveSpeed}`);
+                announcementMessage = `You received a speed boost of ${lootValue.toFixed(2)}!`;
                 break;
             case 'bonus':
                 lootValue = 2;
                 player.multiplier = lootValue; // Assuming player has a scoreMultiplier property
                 player.scoreDuration = 60; // Duration in seconds
                 console.log(`Player received a bonus score multiplier of ${player.multiplier} for ${player.scoreDuration} seconds.`);
+                announcementMessage = `You received a score multiplier of ${player.multiplier}!`;
                 
                 // Show the bonus div and start countdown
                 ui.updateDamage(player.scoreDuration); // Update the bonus display
@@ -81,8 +86,22 @@ export class Box {
                     }
                 }, 1000); // Update every second
                 break;
-            }
         }
+    
+        // Announce the bonus received
+        this.announceBonus(announcementMessage);
+    }
+    
+    announceBonus(message) {
+        const announcementElement = document.getElementById('announcement');
+        announcementElement.textContent = message; // Set the announcement message
+        announcementElement.style.display = 'block'; // Show the announcement
+    
+        // Hide the announcement after a few seconds
+        setTimeout(() => {
+            announcementElement.style.display = 'none'; // Hide the announcement
+        }, 3000); // Display for 3 seconds
+    }
 
     isOpen() {
         return this.opened;

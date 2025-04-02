@@ -559,22 +559,13 @@ export class Player {
         // Check player is near a box
         this.boxes.forEach(box => {
             const distance = this.getPosition().distanceTo(box.position);
-            if (distance < 4.5) { // Adjust distance as needed
-                this.showOpenBoxMessage(true); // Show message to open the box
+            if (distance < 4.5) // Adjust distance as needed
                 document.addEventListener('keydown', (event) => {
                     if (event.key === 'e') {
                         box.interact(this); // Call the interact method on the box
                     }
                 }, { once: true }); // Use { once: true } to ensure the listener is removed after execution
-            } else {
-                this.showOpenBoxMessage(false); // Hide message if not close
-            }
         });
-    }
-
-    showOpenBoxMessage(show) {
-        const messageElement = document.getElementById('open-box-message'); // Ensure you have this element in your HTML
-        messageElement.style.display = show ? 'block' : 'none'; // Show or hide the message
     }
     
     updateAimingState(delta) {
