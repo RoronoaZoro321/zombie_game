@@ -180,7 +180,7 @@ export class Level {
         const loader = new GLTFLoader();
         
         // Load the forest model
-        loader.load('../../assets/tree.glb', (gltf) => {
+        loader.load('../../assets/new_tree.glb', (gltf) => {
             const tree = gltf.scene;
             
             // Apply random scale variation to make trees look different
