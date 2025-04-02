@@ -3,7 +3,10 @@ export class UI {
         this.scoreElement = document.getElementById('score');
         this.healthBar = document.getElementById('health-bar');  // Update to use the health bar
         this.ammoElement = document.getElementById('ammo');
-        this.damageElement = document.getElementById('damage'); // Create this element in your HTML
+        this.damageElement = document.getElementById('bonus');
+        if (!this.damageElement) {
+            console.error('Bonus element not found in the DOM');
+        }
         this.pauseMenu = document.getElementById('pause-menu');
         this.gameOverScreen = document.getElementById('game-over');
         this.finalScoreElement = document.getElementById('final-score');
@@ -23,8 +26,8 @@ export class UI {
         this.ammoElement.textContent = `Ammo: ${ammo}`;
     }
 
-    updateDamage(damage) {
-        this.damageElement.textContent = `Damage: ${damage}`;
+    updateDamage(time) {
+        this.damageElement.textContent = `Bonus: ${time} seconds`;
     }
     
     togglePauseMenu(show) {

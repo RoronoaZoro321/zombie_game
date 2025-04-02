@@ -15,6 +15,8 @@ export class Game {
         this.player = null;
         this.zombies = [];
         this.boxes = [];
+        this.maxBoxes = 3;
+        this.openedBoxesCount = 0;
         this.level = null;
         this.ui = null;
         this.clock = new THREE.Clock();
@@ -63,7 +65,7 @@ export class Game {
         
         // Set up the zombies
         this.spawnZombies();
-        this.startBoxSpawn();
+        this.startBoxSpawning();
 
         // Handle window resize
         window.addEventListener('resize', () => this.handleResize());
@@ -159,10 +161,9 @@ export class Game {
         }
     }
 
-    startBoxSpawn() {
+    startBoxSpawning() {
         this.boxSpawnInterval = setInterval(() => {
-            console.log('Spawning box');
-                this.spawnBox();
+            this.spawnBox();
         }, this.getRandomSpawnTime());
     }
 
@@ -186,8 +187,8 @@ export class Game {
     }
 
     getRandomSpawnTime() {
-        // Return a random time between 2 and 5 seconds
-        return Math.floor(Math.random() * (5000 - 2000 + 1)) + 2000;
+        // Return a random time between 2 - 5 seconds
+        return Math.floor(Math.random() * 3000) + 2000;
     }
 
     handleResize() {
@@ -217,7 +218,8 @@ export class Game {
                 this.scene.remove(zombie.model);
                 this.zombies.splice(i, 1);
                 this.score += 10;
-                this.ui.updateScore(this.score);
+                this.ui.updateScore(this.score * this.player.multiplier);
+                console.log(`Score: ${this.score}`);
                 
                 // Respawn zombie if there are less than the map's zombie count
                 let maxZombies = 1;
@@ -311,19 +313,19 @@ export class Game {
     cleanup() {
         // Stop game loop
         this.gameOver = true;
-        
+    
         // Remove event listeners
         window.removeEventListener('resize', this.handleResize);
-        
+    
         // Remove all zombies
         this.zombies.forEach(zombie => {
             if (zombie.model) {
                 this.scene.remove(zombie.model);
             }
         });
-
+    
         clearInterval(this.boxSpawnInterval);
-        
+    
         // Remove player bullets
         if (this.player) {
             this.player.bullets.forEach(bullet => {
@@ -332,18 +334,32 @@ export class Game {
                 }
             });
         }
-        
+    
+        // Remove boxes
+        this.boxes.forEach(box => {
+            if (box.model) {
+                this.scene.remove(box.model);
+                box.model.traverse((child) => {
+                    if (child.isMesh) {
+                        child.geometry.dispose();
+                        child.material.dispose();
+                    }
+                });
+            }
+        });
+        this.boxes = []; // Clear the boxes array
+    
         // Remove player gun and camera
         if (this.player && this.player.controls) {
             this.player.controls.dispose();
         }
-        
+    
         // Dispose renderer
         if (this.renderer) {
             this.renderer.dispose();
             document.body.removeChild(this.renderer.domElement);
         }
-        
+    
         // Clear scene
         if (this.scene) {
             this.disposeScene(this.scene);
