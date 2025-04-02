@@ -52,10 +52,10 @@ export class Box {
                 announcementMessage = `You received ${lootValue} health!`;
                 break;
             case 'ammo':
-                lootValue = Math.floor(Math.random() * 30) + 20; // Random ammo between 20 and 50
-                player.ammo += lootValue;
+                lootValue = Math.floor(Math.random() * 6) + 5; // Random ammo between 5 and 10
+                player.max_ammo += lootValue;
                 ui.updateAmmo(player.ammo);
-                announcementMessage = `You received ${lootValue} ammo!`;
+                announcementMessage = `You received ${lootValue} max ammo!`;
                 break;
             case 'speed':
                 lootValue = Math.random() * 0.2 + 0.1; // Random speed increase between 0.1 and 0.3
@@ -64,9 +64,14 @@ export class Box {
                 announcementMessage = `You received a speed boost of ${lootValue.toFixed(2)}!`;
                 break;
             case 'bonus':
+                if (player.hasBonusLoot) {
+                // If player already has bonus loot, announce that they received it again
+                announcementMessage = `You already have a score multiplier!`;
+                }else{
                 lootValue = 2;
                 player.multiplier = lootValue; // Assuming player has a scoreMultiplier property
                 player.scoreDuration = 60; // Duration in seconds
+                player.hasBonusLoot = true; // Set flag to indicate player has bonus loot
                 console.log(`Player received a bonus score multiplier of ${player.multiplier} for ${player.scoreDuration} seconds.`);
                 announcementMessage = `You received a score multiplier of ${player.multiplier}!`;
                 
@@ -82,10 +87,14 @@ export class Box {
                     
                     if (remainingTime <= 0) {
                         clearInterval(countdownInterval); // Stop the countdown
+                        player.multiplier = 1; // Reset multiplier
+                        player.scoreDuration = 0; // Reset duration
+                        player.hasBonusLoot = false; // Reset flag
                         document.getElementById('bonus').style.display = 'none'; // Hide the bonus div after the duration
                     }
                 }, 1000); // Update every second
                 break;
+            }
         }
     
         // Announce the bonus received

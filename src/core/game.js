@@ -187,8 +187,8 @@ export class Game {
     }
 
     getRandomSpawnTime() {
-        // Return a random time between 45 - 90 seconds
-        return Math.floor(Math.random() * (45000 - 30000 + 1)) + 30000;
+        // Return a random time between 2 - 5 seconds
+        return Math.floor(Math.random() * 3000) + 2000;
     }
 
     handleResize() {

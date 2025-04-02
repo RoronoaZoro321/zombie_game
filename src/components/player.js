@@ -14,7 +14,9 @@ export class Player {
         this.runSpeedMultiplier = 1.7; // Multiplier for running speed
         this.health = 100;
         this.ammo = 30;
+        this.max_ammo = 30;
         this.multiplier = 1;
+        this.lootBonus = false
         this.scoreDuration = 0;
         this.canShoot = true;
         this.reloadTime = 1.5;
@@ -416,7 +418,7 @@ export class Player {
     }
     
     reload() {
-        if (this.ammo < 30 && this.controls.isLocked) {
+        if (this.ammo < this.max_ammo && this.controls.isLocked) {
             this.canShoot = false;
             
             // Play reload sound
@@ -426,7 +428,7 @@ export class Player {
             this.playReloadAnimation();
             
             setTimeout(() => {
-                this.ammo = 30;
+                this.ammo = this.max_ammo; // Reload to max ammo
                 this.canShoot = true;
                 document.getElementById('ammo').textContent = `Ammo: ${this.ammo}`;
             }, this.reloadTime * 1000);
