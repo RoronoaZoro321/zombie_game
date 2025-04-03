@@ -8,6 +8,7 @@ export class Level {
         this.scene = scene;
         this.mapSize = 100; // Size of the floor plane
         this.barrierHeight = 5; // Height of the barrier walls
+        this.fogDistance = 35; // Visibility range before fog completely obscures view
     }
     
     create() {
@@ -20,12 +21,12 @@ export class Level {
         floorTexture.wrapT = THREE.RepeatWrapping;
         floorTexture.repeat.set(10, 10); // Adjust the repeat value as needed
 
-        // Create floor with texture
+        // Create floor with texture - make it even darker for horror atmosphere
         const floorGeometry = new THREE.PlaneGeometry(this.mapSize, this.mapSize);
         const floorMaterial = new THREE.MeshStandardMaterial({ 
             map: floorTexture, // Use the loaded texture
-            //make it darker
-            color: 0x333333, // Darker color for forest
+            color: 0x222222, // Even darker color for forest
+            roughness: 0.9 // More rough texture for better light interaction
         });
         const floor = new THREE.Mesh(floorGeometry, floorMaterial);
         floor.rotation.x = -Math.PI / 2; // Rotate to be horizontal
@@ -35,12 +36,15 @@ export class Level {
         // Add barrier walls around the perimeter
         this.createBarriers();
         
-        // Add ambient light - darker for forest
-        const ambientLight = new THREE.AmbientLight(0x333333, 0.8);
+        // Add fog to limit visibility - dense fog creates horror atmosphere
+        this.scene.fog = new THREE.FogExp2(0x000000, 0.04); // Exponential fog
+        
+        // Add ambient light - very dark for horror setting
+        const ambientLight = new THREE.AmbientLight(0x111122, 0.4); // Reduced intensity, slight blue tint
         this.scene.add(ambientLight);
         
-        // Add directional light (moonlight)
-        const directionalLight = new THREE.DirectionalLight(0xaaaaff, 0.6);
+        // Add directional light (dim moonlight)
+        const directionalLight = new THREE.DirectionalLight(0x8888cc, 0.3); // Dimmer blue-tinted moonlight
         directionalLight.position.set(1, 3, 2);
         directionalLight.castShadow = true;
         
@@ -164,27 +168,27 @@ export class Level {
     }
     
     addForestObjects() {
-        // Trees - keep them away from barriers
-        this.placeRandomObjects(15, () => this.createTree(), 40, 10);
+        // Place three different types of trees with specific counts
+        this.placeRandomObjects(20, () => this.createTree('../../assets/tree1.glb', 0.1), 40, 10); // tree1 - 15 trees
+        this.placeRandomObjects(10, () => this.createTree('../../assets/tree2.glb', 0.6), 40, 10); // tree2 - 7 trees
+        this.placeRandomObjects(3, () => this.createTree('../../assets/tree3.glb', 0.4), 40, 10); // tree3 - 3 trees
         
         // Rocks
         this.placeRandomObjects(15, () => this.createRock(), 40, 5);
         
-        // Add some fog particles
-        // this.addFogParticles();
     }
     
-    createTree() {
+    createTree(modelPath, scaling) {
         // Create a group to hold the loaded tree
         const treeGroup = new THREE.Group();
         const loader = new GLTFLoader();
-        
-        // Load the forest model
-        loader.load('../../assets/new_tree.glb', (gltf) => {
+          
+        // Load the forest model with the specified path
+        loader.load(modelPath, (gltf) => {
             const tree = gltf.scene;
             
             // Apply random scale variation to make trees look different
-            const scale = 0.8 + Math.random() * 0.4;
+            const scale = scaling + Math.random() * 0.4;
             tree.scale.set(scale, scale, scale);
             
             // Apply random rotation for variety
@@ -235,33 +239,6 @@ export class Level {
         rock.receiveShadow = true;
         
         return rock;
-    }
-    
-    addFogParticles() {
-        // Simple particle system for fog
-        const particleCount = 200;
-        const particleGeometry = new THREE.BufferGeometry();
-        const particlePositions = new Float32Array(particleCount * 3);
-        
-        for (let i = 0; i < particleCount; i++) {
-            const i3 = i * 3;
-            particlePositions[i3] = (Math.random() - 0.5) * 60;
-            particlePositions[i3 + 1] = Math.random() * 2;
-            particlePositions[i3 + 2] = (Math.random() - 0.5) * 60;
-        }
-        
-        particleGeometry.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
-        
-        const particleMaterial = new THREE.PointsMaterial({
-            color: 0xcccccc,
-            size: 0.5,
-            transparent: true,
-            opacity: 0.4,
-            blending: THREE.AdditiveBlending
-        });
-        
-        const particles = new THREE.Points(particleGeometry, particleMaterial);
-        this.scene.add(particles);
     }
     
     placeRandomObjects(count, createFunc, maxDistance, minDistanceFromCenter = 0) {
