@@ -74,47 +74,45 @@ export class Box {
                 announcementMessage = `You already have a score multiplier!`;
                 }else{
                 lootValue = 2;
-                player.multiplier = lootValue; // Assuming player has a scoreMultiplier property
-                player.scoreDuration = 60; // Duration in seconds
-                player.hasBonusLoot = true; // Set flag to indicate player has bonus loot
+                player.multiplier = lootValue;
+                player.scoreDuration = 60;
+                player.hasBonusLoot = true; 
                 console.log(`Player received a bonus score multiplier of ${player.multiplier} for ${player.scoreDuration} seconds.`);
                 announcementMessage = `You received a score multiplier of ${player.multiplier}!`;
                 
-                // Show the bonus div and start countdown
-                ui.updateDamage(player.scoreDuration); // Update the bonus display
-                document.getElementById('bonus').style.display = 'block'; // Show the bonus div
                 
-                // Start countdown to hide the bonus div
+                ui.updateDamage(player.scoreDuration);
+                document.getElementById('bonus').style.display = 'block';
+                
                 let remainingTime = player.scoreDuration;
                 const countdownInterval = setInterval(() => {
                     remainingTime--;
                     ui.updateDamage(remainingTime); // Update the displayed time
                     
                     if (remainingTime <= 0) {
-                        clearInterval(countdownInterval); // Stop the countdown
-                        player.multiplier = 1; // Reset multiplier
-                        player.scoreDuration = 0; // Reset duration
-                        player.hasBonusLoot = false; // Reset flag
-                        document.getElementById('bonus').style.display = 'none'; // Hide the bonus div after the duration
+                        clearInterval(countdownInterval); 
+                        player.multiplier = 1; 
+                        player.scoreDuration = 0; 
+                        player.hasBonusLoot = false; 
+                        document.getElementById('bonus').style.display = 'none';
                     }
                 }, 1000); // Update every second
                 break;
             }
         }
     
-        // Announce the bonus received
         this.announceBonus(announcementMessage);
     }
     
     announceBonus(message) {
         const announcementElement = document.getElementById('announcement');
-        announcementElement.textContent = message; // Set the announcement message
-        announcementElement.style.display = 'block'; // Show the announcement
+        announcementElement.textContent = message;
+        announcementElement.style.display = 'block';
     
         // Hide the announcement after a few seconds
         setTimeout(() => {
-            announcementElement.style.display = 'none'; // Hide the announcement
-        }, 3000); // Display for 3 seconds
+            announcementElement.style.display = 'none';
+        }, 3000);
     }
 
     isOpen() {
